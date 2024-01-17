@@ -1,0 +1,122 @@
+type AuthorizerChanged @entity(immutable: true) {
+  id: Bytes!
+  newAuthorizer: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ExternalBalanceTransfer @entity(immutable: true) {
+  id: Bytes!
+  token: Bytes! # address
+  sender: Bytes! # address
+  recipient: Bytes! # address
+  amount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type FlashLoan @entity(immutable: true) {
+  id: Bytes!
+  recipient: Bytes! # address
+  token: Bytes! # address
+  amount: BigInt! # uint256
+  feeAmount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type InternalBalanceChanged @entity(immutable: true) {
+  id: Bytes!
+  user: Bytes! # address
+  token: Bytes! # address
+  delta: BigInt! # int256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PausedStateChanged @entity(immutable: true) {
+  id: Bytes!
+  paused: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PoolBalanceChanged @entity(immutable: true) {
+  id: Bytes!
+  poolId: Bytes! # bytes32
+  liquidityProvider: Bytes! # address
+  tokens: [Bytes!]! # address[]
+  deltas: [BigInt!]! # int256[]
+  protocolFeeAmounts: [BigInt!]! # uint256[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PoolBalanceManaged @entity(immutable: true) {
+  id: Bytes!
+  poolId: Bytes! # bytes32
+  assetManager: Bytes! # address
+  token: Bytes! # address
+  cashDelta: BigInt! # int256
+  managedDelta: BigInt! # int256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PoolRegistered @entity(immutable: true) {
+  id: Bytes!
+  poolId: Bytes! # bytes32
+  poolAddress: Bytes! # address
+  specialization: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RelayerApprovalChanged @entity(immutable: true) {
+  id: Bytes!
+  relayer: Bytes! # address
+  sender: Bytes! # address
+  approved: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Swap @entity(immutable: true) {
+  id: Bytes!
+  poolId: Bytes! # bytes32
+  tokenIn: Bytes! # address
+  tokenOut: Bytes! # address
+  amountIn: BigInt! # uint256
+  amountOut: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type TokensDeregistered @entity(immutable: true) {
+  id: Bytes!
+  poolId: Bytes! # bytes32
+  tokens: [Bytes!]! # address[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type TokensRegistered @entity(immutable: true) {
+  id: Bytes!
+  poolId: Bytes! # bytes32
+  tokens: [Bytes!]! # address[]
+  assetManagers: [Bytes!]! # address[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}

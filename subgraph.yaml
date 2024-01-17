@@ -1,0 +1,51 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Vault
+    network: mainnet
+    source:
+      address: "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
+      abi: Vault
+      startBlock: 12272146
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - PoolBalanceChanged
+        - PoolRegistered
+        - Swap
+      abis:
+        - name: Vault
+          file: ./abis/Vault.json
+      eventHandlers:
+        - event: PoolBalanceChanged(indexed address,indexed address,address[],int256[])
+          handler: handlePoolBalanceChanged
+        - event: PoolRegistered(indexed address,indexed address,address[],address[],uint256,address,(bool,bool,bool,bool,bool,bool,bool,bool),(bool,bool))
+          handler: handlePoolRegistered
+        - event: Swap(indexed address,indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleSwap
+      file: ./src/mappings/vault.ts
+templates:
+  - kind: ethereum/contract
+    name: BPT
+    network: mainnet
+    source:
+      abi: BPT
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - PoolShare
+      abis:
+        - name: BPT
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/mappings/pool.ts

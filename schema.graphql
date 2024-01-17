@@ -1,0 +1,55 @@
+type PoolBalanceChanged @entity(immutable: true) {
+  id: Bytes!
+  pool: Bytes! # address
+  liquidityProvider: Bytes! # address
+  tokens: [Bytes!]! # address[]
+  deltas: [BigInt!]! # int256[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PoolRegistered @entity(immutable: true) {
+  id: Bytes!
+  pool: Bytes! # address
+  factory: Bytes! # address
+  tokens: [Bytes!]! # address[]
+  rateProviders: [Bytes!]! # address[]
+  pauseWindowEndTime: BigInt! # uint256
+  pauseManager: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Swap @entity(immutable: true) {
+  id: Bytes!
+  pool: Bytes! # address
+  tokenIn: Bytes! # address
+  tokenOut: Bytes! # address
+  amountIn: BigInt! # uint256
+  amountOut: BigInt! # uint256
+  swapFeeAmount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Pool @entity {
+  id: Bytes!
+  address: Bytes!
+  totalShares: BigDecimal!
+}
+
+type PoolShare @entity {
+  id: ID!
+  pool: Pool!
+  userAddress: Bytes!
+  balance: BigDecimal!
+}
+
+type PoolSnapshot @entity {
+  id: ID!
+  pool: Pool!
+  amounts: [BigDecimal!]!
+}

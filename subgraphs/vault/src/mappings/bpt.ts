@@ -1,8 +1,12 @@
-import { Pool } from "../../generated/schema"
-import { Transfer as TransferEvent } from "../../generated/templates/BPT/BPT"
+import { Pool } from "../types/schema"
+import { Transfer as TransferEvent } from "../types/templates/BPT/BPT"
 import { ZERO_ADDRESS } from "../helpers/constants"
 import { getPoolShare } from "../helpers/entities"
 import { tokenToDecimal } from "../helpers/misc"
+
+/************************************
+ ********** BPTS TRANSFERS **********
+ ************************************/
 
 export function handleTransfer(event: TransferEvent): void {  
     let isMint = event.params.from == ZERO_ADDRESS;
@@ -34,4 +38,4 @@ export function handleTransfer(event: TransferEvent): void {
     }
   
     pool.save();
-  }
+}

@@ -1,5 +1,1 @@
-# Balancer V3 Subgraph
-
-## Setup
-
-`pnpm codegen`
+# Balancer V3 Subgraphs

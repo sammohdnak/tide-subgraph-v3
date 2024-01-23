@@ -1,0 +1,65 @@
+type Pool @entity {
+  id: Bytes!
+  factory: Bytes!
+  tokens: [Bytes!]!
+  rateProviders: [Bytes!]!
+  balances: [BigInt!]!
+  totalShares: BigDecimal!
+  pauseWindowEndTime: BigInt!
+  pauseManager: Bytes!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Swap @entity(immutable: true) {
+  id: Bytes!
+  pool: Bytes!
+  tokenIn: Bytes!
+  tokenOut: Bytes!
+  tokenAmountIn: BigInt!
+  tokenAmountOut: BigInt!
+  swapFeeAmount: BigInt!
+  user: User!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+enum InvestType {
+  Join
+  Exit
+}
+
+type JoinExit @entity(immutable: true) {
+  id: ID!
+  type: InvestType!
+  sender: Bytes!
+  amounts: [BigInt!]!
+  pool: Pool!
+  user: User!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PoolShare @entity {
+  id: ID!
+  pool: Pool!
+  user: User!
+  balance: BigDecimal!
+}
+
+type PoolSnapshot @entity {
+  id: ID!
+  pool: Pool!
+  timestamp: Int!
+  balances: [BigInt!]!
+  totalShares: BigDecimal!
+}
+
+type User @entity {
+  id: ID!
+  swaps: [Swap!] @derivedFrom(field: "user")
+  sharesOwned: [PoolShare!] @derivedFrom(field: "user")
+}

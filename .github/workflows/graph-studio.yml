@@ -1,0 +1,30 @@
+name: Deploy Graph Studio Prod
+
+on:
+  push:
+    branches: master
+
+jobs:
+  deploy-studio-sepolia:
+    runs-on: ubuntu-latest
+    environment: graph
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16
+      - name: Install
+        run: pnpm install
+      - name: Codegen
+        run: pnpm codegen
+      - name: Build
+        run: pnpm build
+      - uses: balancer-labs/graph-deploy@v0.0.1
+        with:
+          graph_deploy_key: ${{secrets.GRAPH_DEPLOY_KEY}}
+          graph_version_label: ${GITHUB_SHA::8}
+          graph_subgraph_name: "balancer-vault-v3-sepolia"
+          graph_account: "balancer-labs"
+          graph_config_file: "subgraph.sepolia.yaml"
+          graph_deploy_studio: true

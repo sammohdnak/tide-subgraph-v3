@@ -10,7 +10,7 @@ import {
   JoinExit
 } from "../types/schema"
 import { ZERO_BI } from "../helpers/constants"
-import { createPoolSnapshot, createPoolToken, loadPoolToken } from "../helpers/entities"
+import { createPoolSnapshot, createPoolToken, createRateProvider, loadPoolToken } from "../helpers/entities"
 
 /************************************
  ******* POOLS REGISTRATIONS ********
@@ -35,12 +35,9 @@ export function handlePoolRegistered(event: PoolRegisteredEvent): void {
 
   for (let i: i32 = 0; i < pool.tokensList.length; i++) {
     let tokenAddress = event.params.tokens[i];
-    createPoolToken(poolAddress, tokenAddress);
-  }
-
-  for (let i: i32 = 0; i < pool.rateProvidersList.length; i++) {
     let rateProviderAddress = event.params.rateProviders[i];
-    createPoolToken(poolAddress, rateProviderAddress);
+    createPoolToken(poolAddress, tokenAddress);
+    createRateProvider(poolAddress, tokenAddress, rateProviderAddress);
   }
 
   createPoolSnapshot(pool, event.block.timestamp.toI32());

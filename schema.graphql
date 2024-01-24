@@ -23,7 +23,7 @@ type PoolToken @entity {
 }
 
 type RateProvider @entity {
-  id: ID!
+  id: Bytes!
   pool: Pool!
   token: PoolToken!
   address: Bytes!

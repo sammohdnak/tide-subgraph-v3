@@ -1,5 +1,5 @@
 import { Address, BigInt } from "@graphprotocol/graph-ts";
-import { Pool, PoolSnapshot, PoolToken } from "../types/schema";
+import { Pool, PoolSnapshot, PoolToken, RateProvider } from "../types/schema";
 import { PoolShare } from "../types/schema";
 import { ZERO_BI } from "./constants";
 
@@ -51,6 +51,20 @@ export function createPoolToken(poolAddress: Address, tokenAddress: Address): vo
     poolToken.address = tokenAddress;
     poolToken.balance = ZERO_BI;
     poolToken.save();
+}
+
+export function createRateProvider(poolAddress: Address, tokenAddress: Address, rateProviderAddress: Address): void {
+    let rateProviderId = poolAddress.concat(rateProviderAddress);
+    let rateProvider = RateProvider.load(rateProviderId);
+
+    if (!rateProvider) {
+        rateProvider = new RateProvider(rateProviderId);
+    }
+
+    rateProvider.pool = poolAddress;
+    rateProvider.token = tokenAddress;
+    rateProvider.address = rateProviderAddress;
+    rateProvider.save();
 }
 
 export function loadPoolToken(poolAddress: Address, tokenAddress: Address): PoolToken {

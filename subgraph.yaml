@@ -25,7 +25,7 @@ dataSources:
       eventHandlers:
         - event: PoolBalanceChanged(indexed address,indexed address,address[],int256[])
           handler: handlePoolBalanceChanged
-        - event: PoolRegistered(indexed address,indexed address,address[],address[],uint256,address,(bool,bool,bool,bool,bool,bool,bool,bool),(bool,bool))
+        - event: PoolRegistered(indexed address,indexed address,(address,uint8,address,bool)[],uint256,address,(bool,bool,bool,bool,bool,bool,bool,bool),(bool,bool))
           handler: handlePoolRegistered
         - event: Swap(indexed address,indexed address,indexed address,uint256,uint256,uint256)
           handler: handleSwap

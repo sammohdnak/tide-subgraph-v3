@@ -8,9 +8,6 @@ type Pool @entity {
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 
-  tokensList: [Bytes!]!
-  rateProvidersList: [Bytes!]!
-
   tokens: [PoolToken!] @derivedFrom(field: "pool")
   rateProviders: [PoolToken!] @derivedFrom(field: "pool")
 }

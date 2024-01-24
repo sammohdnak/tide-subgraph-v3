@@ -21,8 +21,6 @@ export function handlePoolRegistered(event: PoolRegisteredEvent): void {
 
   let pool = new Pool(poolAddress)
   pool.factory = event.params.factory
-  pool.tokensList = changetype<Bytes[]>(event.params.tokens)
-  pool.rateProvidersList = changetype<Bytes[]>(event.params.rateProviders)
   pool.pauseWindowEndTime = event.params.pauseWindowEndTime
   pool.pauseManager = event.params.pauseManager
   pool.totalShares = ZERO_BI
@@ -33,10 +31,10 @@ export function handlePoolRegistered(event: PoolRegisteredEvent): void {
 
   pool.save();
 
-  for (let i: i32 = 0; i < pool.tokensList.length; i++) {
-    let tokenAddress = event.params.tokens[i];
-    let rateProviderAddress = event.params.rateProviders[i];
+  for (let i: i32 = 0; i < event.params.tokenConfig.length; i++) {
+    let tokenAddress = event.params.tokenConfig[i].token;
     createPoolToken(poolAddress, tokenAddress);
+    let rateProviderAddress = event.params.tokenConfig[i].rateProvider;
     createRateProvider(poolAddress, tokenAddress, rateProviderAddress);
   }
 

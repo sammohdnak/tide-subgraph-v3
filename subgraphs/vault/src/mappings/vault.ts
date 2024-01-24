@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts"
+import { BigInt, Bytes, log } from "@graphprotocol/graph-ts"
 import {
   PoolBalanceChanged as PoolBalanceChangedEvent,
   PoolRegistered as PoolRegisteredEvent,
@@ -9,28 +9,39 @@ import {
   Swap,
   JoinExit
 } from "../types/schema"
-import { ZERO_BD, ZERO_BI } from "../helpers/constants"
-import { createPoolSnapshot } from "../helpers/entities"
+import { ZERO_BI } from "../helpers/constants"
+import { createPoolSnapshot, createPoolToken, loadPoolToken } from "../helpers/entities"
 
 /************************************
  ******* POOLS REGISTRATIONS ********
  ************************************/
 
 export function handlePoolRegistered(event: PoolRegisteredEvent): void {
-  let pool = new Pool(event.params.pool)
+  const poolAddress = event.params.pool;
+
+  let pool = new Pool(poolAddress)
   pool.factory = event.params.factory
-  pool.tokens = changetype<Bytes[]>(event.params.tokens)
-  pool.rateProviders = changetype<Bytes[]>(event.params.rateProviders)
-  pool.balances = new Array<BigInt>(event.params.tokens.length)
+  pool.tokensList = changetype<Bytes[]>(event.params.tokens)
+  pool.rateProvidersList = changetype<Bytes[]>(event.params.rateProviders)
   pool.pauseWindowEndTime = event.params.pauseWindowEndTime
   pool.pauseManager = event.params.pauseManager
-  pool.totalShares = ZERO_BD
+  pool.totalShares = ZERO_BI
 
   pool.blockNumber = event.block.number
   pool.blockTimestamp = event.block.timestamp
   pool.transactionHash = event.transaction.hash
 
   pool.save();
+
+  for (let i: i32 = 0; i < pool.tokensList.length; i++) {
+    let tokenAddress = event.params.tokens[i];
+    createPoolToken(poolAddress, tokenAddress);
+  }
+
+  for (let i: i32 = 0; i < pool.rateProvidersList.length; i++) {
+    let rateProviderAddress = event.params.rateProviders[i];
+    createPoolToken(poolAddress, rateProviderAddress);
+  }
 
   createPoolSnapshot(pool, event.block.timestamp.toI32());
 }
@@ -67,17 +78,20 @@ function handlePoolJoined(event: PoolBalanceChangedEvent): void {
     return;
   }
 
-  let tokenAddresses = pool.tokens;
+  let tokensList = pool.tokensList;
 
   let joinId = transactionHash.toHexString().concat(logIndex.toString());
   let join = new JoinExit(joinId);
 
-  let poolBalances = pool.balances;
+  let poolTokens = pool.tokens.load();
   let joinAmounts = new Array<BigInt>(amounts.length);
 
-  for (let i: i32 = 0; i < tokenAddresses.length; i++) {
+  for (let i: i32 = 0; i < poolTokens.length; i++) {
     joinAmounts[i] = event.params.deltas[i];
-    poolBalances[i] = poolBalances[i].plus(joinAmounts[i]);
+
+    let poolToken = poolTokens[i];
+    poolToken.balance = poolToken.balance.plus(joinAmounts[i]);
+    poolToken.save();
   }
 
   join.type = 'Join';
@@ -87,9 +101,6 @@ function handlePoolJoined(event: PoolBalanceChangedEvent): void {
   join.user = event.params.liquidityProvider.toHex();
   join.blockTimestamp = event.block.timestamp;
   join.save();
-
-  pool.balances = poolBalances;
-  pool.save();
 
   createPoolSnapshot(pool, event.block.timestamp.toI32());
 }
@@ -107,17 +118,20 @@ function handlePoolExited(event: PoolBalanceChangedEvent): void {
     return;
   }
 
-  let tokenAddresses = pool.tokens;
+  let tokensList = pool.tokensList;
 
   let exitId = transactionHash.toHexString().concat(logIndex.toString());
   let exit = new JoinExit(exitId);
 
-  let poolBalances = pool.balances;
+  let poolTokens = pool.tokens.load();
   let exitAmounts = new Array<BigInt>(amounts.length);
 
-  for (let i: i32 = 0; i < tokenAddresses.length; i++) {
+  for (let i: i32 = 0; i < poolTokens.length; i++) {
     exitAmounts[i] = event.params.deltas[i].neg();
-    poolBalances[i] = poolBalances[i].minus(exitAmounts[i]);
+
+    let poolToken = poolTokens[i];
+    poolToken.balance = poolToken.balance.minus(exitAmounts[i]);
+    poolToken.save();
   }
 
   exit.type = 'Exit';
@@ -127,9 +141,6 @@ function handlePoolExited(event: PoolBalanceChangedEvent): void {
   exit.user = event.params.liquidityProvider.toHex();
   exit.blockTimestamp = event.block.timestamp;
   exit.save();
-
-  pool.balances = poolBalances;
-  pool.save();
 
   createPoolSnapshot(pool, event.block.timestamp.toI32());
 }

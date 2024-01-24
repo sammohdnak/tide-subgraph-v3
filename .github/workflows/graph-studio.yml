@@ -2,7 +2,7 @@ name: Deploy Graph Studio Prod
 
 on:
   push:
-    branches: master
+    branches: main
 
 jobs:
   deploy-studio-sepolia:
@@ -24,7 +24,7 @@ jobs:
         with:
           graph_deploy_key: ${{secrets.GRAPH_DEPLOY_KEY}}
           graph_version_label: ${GITHUB_SHA::8}
-          graph_subgraph_name: "balancer-vault-v3-sepolia"
+          graph_subgraph_name: "balancer-sepolia-v3"
           graph_account: "balancer-labs"
-          graph_config_file: "subgraph.sepolia.yaml"
+          graph_config_file: "subgraph.yaml"
           graph_deploy_studio: true

@@ -73,8 +73,6 @@ function handlePoolJoined(event: PoolBalanceChangedEvent): void {
     return;
   }
 
-  let tokensList = pool.tokensList;
-
   let joinId = transactionHash.toHexString().concat(logIndex.toString());
   let join = new JoinExit(joinId);
 
@@ -112,8 +110,6 @@ function handlePoolExited(event: PoolBalanceChangedEvent): void {
     log.warning('Pool not found in handlePoolJoined: {} {}', [poolAddress.toHex(), transactionHash.toHex()]);
     return;
   }
-
-  let tokensList = pool.tokensList;
 
   let exitId = transactionHash.toHexString().concat(logIndex.toString());
   let exit = new JoinExit(exitId);

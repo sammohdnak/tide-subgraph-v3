@@ -1,15 +1,26 @@
+type Vault @entity {
+  id: Bytes!
+  authorizer: Bytes!
+  isPaused: Boolean!
+  protocolSwapFee: BigDecimal!
+  protocolYieldFee: BigDecimal!
+  pools: [Pool!] @derivedFrom(field: "vault")
+}
+
 type Pool @entity {
   id: Bytes!
+  vault: Vault!
   factory: Bytes!
+  address: Bytes!
   totalShares: BigInt!
-  pauseWindowEndTime: BigInt!
   pauseManager: Bytes!
+  pauseWindowEndTime: BigInt!
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 
   tokens: [PoolToken!] @derivedFrom(field: "pool")
-  rateProviders: [PoolToken!] @derivedFrom(field: "pool")
+  rateProviders: [RateProvider!] @derivedFrom(field: "pool")
 }
 
 type PoolToken @entity {
@@ -17,6 +28,8 @@ type PoolToken @entity {
   pool: Pool!
   address: Bytes!
   balance: BigInt!
+  totalProtocolSwapFee: BigInt!
+  totalProtocolYieldFee: BigInt!
 }
 
 type RateProvider @entity {
@@ -68,12 +81,15 @@ type PoolSnapshot @entity {
   id: ID!
   pool: Pool!
   timestamp: Int!
-  balances: [BigInt!]!
   totalShares: BigInt!
+  balances: [BigInt!]!
+  totalProtocolSwapFees: [BigInt!]!
+  totalProtocolYieldFees: [BigInt!]!
 }
 
 type User @entity {
   id: ID!
   swaps: [Swap!] @derivedFrom(field: "user")
   shares: [PoolShare!] @derivedFrom(field: "user")
+  joinExits: [JoinExit!] @derivedFrom(field: "user")
 }

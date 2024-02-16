@@ -2,6 +2,10 @@ import { BigInt, Bytes, log } from "@graphprotocol/graph-ts"
 import {
   PoolBalanceChanged as PoolBalanceChangedEvent,
   PoolRegistered as PoolRegisteredEvent,
+  ProtocolSwapFeeCharged,
+  ProtocolSwapFeePercentageChanged,
+  ProtocolYieldFeeCharged,
+  ProtocolYieldFeePercentageChanged,
   Swap as SwapEvent,
 } from "../types/Vault/Vault"
 import {
@@ -10,20 +14,24 @@ import {
   JoinExit
 } from "../types/schema"
 import { ZERO_BI } from "../helpers/constants"
-import { createPoolSnapshot, createPoolToken, createRateProvider, loadPoolToken } from "../helpers/entities"
+import { createPoolSnapshot, createPoolToken, createRateProvider, getVault, loadPoolToken } from "../helpers/entities"
+import { scaleDown } from "../helpers/misc"
 
 /************************************
  ******* POOLS REGISTRATIONS ********
  ************************************/
 
 export function handlePoolRegistered(event: PoolRegisteredEvent): void {
-  const poolAddress = event.params.pool;
+  let vault = getVault(event.address);
+  let poolAddress = event.params.pool;
 
-  let pool = new Pool(poolAddress)
-  pool.factory = event.params.factory
-  pool.pauseWindowEndTime = event.params.pauseWindowEndTime
-  pool.pauseManager = event.params.pauseManager
-  pool.totalShares = ZERO_BI
+  let pool = new Pool(poolAddress);
+  pool.vault = vault.id;
+  pool.address = poolAddress;
+  pool.factory = event.params.factory;
+  pool.pauseWindowEndTime = event.params.pauseWindowEndTime;
+  pool.pauseManager = event.params.pauseManager;
+  pool.totalShares = ZERO_BI;
 
   pool.blockNumber = event.block.number
   pool.blockTimestamp = event.block.timestamp
@@ -92,7 +100,9 @@ function handlePoolJoined(event: PoolBalanceChangedEvent): void {
   join.amounts = joinAmounts;
   join.pool = poolAddress;
   join.user = event.params.liquidityProvider.toHex();
+  join.blockNumber = event.block.number;
   join.blockTimestamp = event.block.timestamp;
+  join.transactionHash = transactionHash;
   join.save();
 
   createPoolSnapshot(pool, event.block.timestamp.toI32());
@@ -130,7 +140,9 @@ function handlePoolExited(event: PoolBalanceChangedEvent): void {
   exit.amounts = exitAmounts;
   exit.pool = poolAddress;
   exit.user = event.params.liquidityProvider.toHex();
+  exit.blockNumber = event.block.number;
   exit.blockTimestamp = event.block.timestamp;
+  exit.transactionHash = transactionHash;
   exit.save();
 
   createPoolSnapshot(pool, event.block.timestamp.toI32());
@@ -143,26 +155,78 @@ function handlePoolExited(event: PoolBalanceChangedEvent): void {
 export function handleSwap(event: SwapEvent): void {
   let swap = new Swap(
     event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
+  );
 
-  swap.pool = event.params.pool
-  swap.tokenIn = event.params.tokenIn
-  swap.tokenOut = event.params.tokenOut
-  swap.tokenAmountIn = event.params.amountIn
-  swap.tokenAmountOut = event.params.amountOut
-  swap.swapFeeAmount = event.params.swapFeeAmount
+  swap.pool = event.params.pool;
+  swap.tokenIn = event.params.tokenIn;
+  swap.tokenOut = event.params.tokenOut;
+  swap.tokenAmountIn = event.params.amountIn;
+  swap.tokenAmountOut = event.params.amountOut;
+  swap.swapFeeAmount = event.params.swapFeeAmount;
+  swap.user = event.transaction.from.toHexString();
 
-  swap.blockNumber = event.block.number
-  swap.blockTimestamp = event.block.timestamp
-  swap.transactionHash = event.transaction.hash
+  swap.blockNumber = event.block.number;
+  swap.blockTimestamp = event.block.timestamp;
+  swap.transactionHash = event.transaction.hash;
 
   swap.save();
 
-  let pool = Pool.load(event.params.pool);
+  let poolAddress = event.params.pool;
+
+  let pool = Pool.load(poolAddress);
   if (pool == null) {
-    log.warning('Pool not found in handleSwap: {} {}', [event.params.pool.toHex(), event.transaction.hash.toHex()]);
+    log.warning('Pool not found in handleSwap: {} {}', [poolAddress.toHex(), event.transaction.hash.toHex()]);
     return;
   }
 
+  let tokenInAddress = event.params.tokenIn;
+  let tokenOutAddress = event.params.tokenOut;
+
+  let poolTokenIn = loadPoolToken(poolAddress, tokenInAddress);
+  let poolTokenOut = loadPoolToken(poolAddress, tokenOutAddress);
+  if (poolTokenIn == null || poolTokenOut == null) {
+    log.warning('PoolToken not found in handleSwap: (tokenIn: {}), (tokenOut: {})', [
+      tokenInAddress.toHexString(),
+      tokenOutAddress.toHexString(),
+    ]);
+    return;
+  }
+
+  let newInAmount = poolTokenIn.balance.plus(event.params.amountIn);
+  poolTokenIn.balance = newInAmount;
+  poolTokenIn.save();
+
+  let newOutAmount = poolTokenOut.balance.minus(event.params.amountOut);
+  poolTokenOut.balance = newOutAmount;
+  poolTokenOut.save();
+
   createPoolSnapshot(pool, event.block.timestamp.toI32());
+}
+
+/************************************
+ ********** PROTOCOL FEES ***********
+ ************************************/
+
+ export function handleProtocolSwapFeePercentageChanged(event: ProtocolSwapFeePercentageChanged): void {
+  let vault = getVault(event.address);
+  vault.protocolSwapFee = scaleDown(event.params.swapFeePercentage, 18);
+  vault.save();
+}
+
+export function handleProtocolYieldFeePercentageChanged(event: ProtocolYieldFeePercentageChanged): void {
+  let vault = getVault(event.address);
+  vault.protocolYieldFee = scaleDown(event.params.yieldFeePercentage, 18);
+  vault.save();
+}
+
+export function handleProtocolSwapFeeCharged(event: ProtocolSwapFeeCharged): void {
+  let poolToken = loadPoolToken(event.params.pool, event.params.token);
+  poolToken.totalProtocolSwapFee = poolToken.totalProtocolSwapFee.plus(event.params.amount);
+  poolToken.save();
+}
+
+export function handleProtocolYieldFeeCharged(event: ProtocolYieldFeeCharged): void {
+  let poolToken = loadPoolToken(event.params.pool, event.params.token);
+  poolToken.totalProtocolYieldFee = poolToken.totalProtocolYieldFee.plus(event.params.amount);
+  poolToken.save();
 }

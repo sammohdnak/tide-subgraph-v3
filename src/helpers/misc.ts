@@ -6,3 +6,16 @@ export function tokenToDecimal(amount: BigInt, decimals: i32): BigDecimal {
       .toBigDecimal();
     return amount.toBigDecimal().div(scale);
 }
+
+export function scaleDown(num: BigInt, decimals: i32): BigDecimal {
+  return num.divDecimal(BigInt.fromI32(10).pow(u8(decimals)).toBigDecimal());
+}
+
+export function scaleUp(num: BigDecimal, decimals: i32): BigInt {
+  return BigInt.fromString(
+    num
+      .truncate(decimals)
+      .times(BigInt.fromI32(10).pow(u8(decimals)).toBigDecimal())
+      .toString()
+  );
+}

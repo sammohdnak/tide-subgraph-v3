@@ -128,11 +128,6 @@
   },
   {
     "inputs": [],
-    "name": "CallbackFailed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "CannotReceiveEth",
     "type": "error"
   },
@@ -246,6 +241,11 @@
       }
     ],
     "name": "HandlerOutOfBounds",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "HookFailed",
     "type": "error"
   },
   {
@@ -419,6 +419,11 @@
   },
   {
     "inputs": [],
+    "name": "ProtocolYieldFeePercentageTooHigh",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "QueriesDisabled",
     "type": "error"
   },
@@ -495,6 +500,22 @@
   {
     "inputs": [],
     "name": "SwapFeePercentageTooHigh",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "limit",
+        "type": "uint256"
+      }
+    ],
+    "name": "SwapLimit",
     "type": "error"
   },
   {
@@ -607,7 +628,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "token",
+        "name": "pool",
         "type": "address"
       },
       {
@@ -826,8 +847,8 @@
           }
         ],
         "indexed": false,
-        "internalType": "struct PoolCallbacks",
-        "name": "callbacks",
+        "internalType": "struct PoolHooks",
+        "name": "hooks",
         "type": "tuple"
       },
       {
@@ -876,12 +897,75 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "ProtocolSwapFeeCharged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "uint256",
         "name": "swapFeePercentage",
         "type": "uint256"
       }
     ],
     "name": "ProtocolSwapFeePercentageChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "ProtocolYieldFeeCharged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "yieldFeePercentage",
+        "type": "uint256"
+      }
+    ],
+    "name": "ProtocolYieldFeePercentageChanged",
     "type": "event"
   },
   {
@@ -933,7 +1017,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "token",
+        "name": "pool",
         "type": "address"
       },
       {
@@ -1063,6 +1147,35 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "getPoolTokenCountAndIndexOfToken",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "getVaultExtension",
     "outputs": [
@@ -1092,6 +1205,19 @@
       }
     ],
     "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "reentrancyGuardEntered",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1253,6 +1379,11 @@
           {
             "internalType": "uint256",
             "name": "amountGivenRaw",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "limitRaw",
             "type": "uint256"
           },
           {

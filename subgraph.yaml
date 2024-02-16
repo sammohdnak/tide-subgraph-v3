@@ -9,26 +9,33 @@ dataSources:
     network: sepolia
     source:
       abi: Vault
-      address: "0x816e90DC85bF016455017a76Bc09CC0451Eeb308"
-      startBlock: 5135341
+      address: "0xDaa273AeEc06e9CCb7428a77E2abb1E4659B16D2"
+      startBlock: 5274748
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - PoolBalanceChanged
-        - PoolRegistered
-        - Swap
+        - Vault
+        - Pool
       abis:
         - name: Vault
           file: ./abis/Vault.json
       eventHandlers:
-        - event: PoolBalanceChanged(indexed address,indexed address,address[],int256[])
-          handler: handlePoolBalanceChanged
         - event: PoolRegistered(indexed address,indexed address,(address,uint8,address,bool)[],uint256,address,(bool,bool,bool,bool,bool,bool,bool,bool),(bool,bool))
           handler: handlePoolRegistered
+        - event: PoolBalanceChanged(indexed address,indexed address,address[],int256[])
+          handler: handlePoolBalanceChanged
         - event: Swap(indexed address,indexed address,indexed address,uint256,uint256,uint256)
           handler: handleSwap
+        - event: ProtocolSwapFeePercentageChanged(indexed uint256)
+          handler: handleProtocolSwapFeePercentageChanged
+        - event: ProtocolYieldFeePercentageChanged(indexed uint256)
+          handler: handleProtocolYieldFeePercentageChanged
+        - event: ProtocolSwapFeeCharged(indexed address,indexed address,uint256)
+          handler: handleProtocolSwapFeeCharged
+        - event: ProtocolYieldFeeCharged(indexed address,indexed address,uint256)
+          handler: handleProtocolYieldFeeCharged
       file: ./src/mappings/vault.ts
 templates:
   - kind: ethereum/contract

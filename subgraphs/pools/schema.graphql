@@ -1,0 +1,30 @@
+enum PoolType {
+  Weighted
+  Stable
+}
+
+type Factory @entity {
+  "Unique identifier for the Factory"
+  id: Bytes!
+  "Address of the Factory contract"
+  address: Bytes!
+  "Type of pools this Factory creates"
+  type: PoolType!
+  "Version number of the Factory"
+  version: Int!
+  "Pools created by this Factory"
+  pools: [Pool!] @derivedFrom(field: "factory")
+}
+
+type Pool @entity {
+  "Unique identifier for the Pool"
+  id: Bytes!
+  "Address of the Pool contract"
+  address: Bytes!
+  "Factory that created this Pool"
+  factory: Factory!
+  "Amplification parameter for Stable Pools"
+  amp: BigInt
+  "Token weights for Weighted Pools"
+  weights: [BigDecimal!]
+}

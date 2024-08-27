@@ -1,0 +1,310 @@
+type Vault @entity {
+  "Unique identifier for the Vault"
+  id: Bytes!
+  "Address of the authorizer"
+  authorizer: Bytes!
+  "Address of the protocol fee controller"
+  protocolFeeController: Bytes!
+  "Indicates whether the Vault is currently paused"
+  isPaused: Boolean!
+  "Protocol swap fee percentage"
+  protocolSwapFee: BigDecimal!
+  "Protocol yield fee percentage"
+  protocolYieldFee: BigDecimal!
+  "Pools associated with this Vault"
+  pools: [Pool!] @derivedFrom(field: "vault")
+}
+
+type Pool @entity {
+  "Unique identifier for the Pool"
+  id: Bytes!
+  "The Vault this Pool belongs to"
+  vault: Vault!
+  "The Hook associated with this Pool"
+  hook: Hook!
+  "Configuration for the Hook of this Pool"
+  hookConfig: HookConfig!
+  "Liquidity management settings for this Pool"
+  liquidityManagement: LiquidityManagement!
+  "Address of the factory that created this Pool"
+  factory: Bytes!
+  "Address of the Pool"
+  address: Bytes!
+  "Name of the Pool"
+  name: String!
+  "Symbol of the Pool"
+  symbol: String!
+  "Swap fee percentage for this Pool"
+  swapFee: BigDecimal!
+  "Total shares of the Pool"
+  totalShares: BigDecimal!
+  "Address of the pause manager for this Pool"
+  pauseManager: Bytes!
+  "Timestamp when the pause window ends"
+  pauseWindowEndTime: BigInt!
+  "Block number when the Pool was created"
+  blockNumber: BigInt!
+  "Timestamp of the block when the Pool was created"
+  blockTimestamp: BigInt!
+  "Hash of the transaction that created the Pool"
+  transactionHash: Bytes!
+  "Indicates whether the Pool has been initialized"
+  isInitialized: Boolean!
+
+  "Total number of swaps performed in this Pool"
+  swapsCount: BigInt!
+  "Number of unique holders of this Pool's tokens"
+  holdersCount: BigInt!
+
+  "Tokens in this Pool"
+  tokens: [PoolToken!]! @derivedFrom(field: "pool")
+  "Rate providers associated with this Pool"
+  rateProviders: [RateProvider!]! @derivedFrom(field: "pool")
+
+  "Snapshots of this Pool's state over time"
+  snapshots: [PoolSnapshot!]! @derivedFrom(field: "pool")
+}
+
+type Hook @entity {
+  "Unique identifier for the Hook"
+  id: Bytes!
+  "Address of the Hook"
+  address: Bytes!
+  "Pools associated with this Hook"
+  pools: [Pool!] @derivedFrom(field: "hook")
+}
+
+type HookConfig @entity {
+  "Unique identifier for the HookConfig"
+  id: Bytes!
+  "The Pool this HookConfig is associated with"
+  pool: Pool!
+  "The Hook this config is for"
+  hook: Hook!
+  "Indicates whether hook-adjusted amounts are enabled"
+  enableHookAdjustedAmounts: Boolean!
+  "Indicates whether the hook should be called before initialization"
+  shouldCallBeforeInitialize: Boolean!
+  "Indicates whether the hook should be called after initialization"
+  shouldCallAfterInitialize: Boolean!
+  "Indicates whether the hook should be called to compute dynamic swap fees"
+  shouldCallComputeDynamicSwapFee: Boolean!
+  "Indicates whether the hook should be called before a swap"
+  shouldCallBeforeSwap: Boolean!
+  "Indicates whether the hook should be called after a swap"
+  shouldCallAfterSwap: Boolean!
+  "Indicates whether the hook should be called before adding liquidity"
+  shouldCallBeforeAddLiquidity: Boolean!
+  "Indicates whether the hook should be called after adding liquidity"
+  shouldCallAfterAddLiquidity: Boolean!
+  "Indicates whether the hook should be called before removing liquidity"
+  shouldCallBeforeRemoveLiquidity: Boolean!
+  "Indicates whether the hook should be called after removing liquidity"
+  shouldCallAfterRemoveLiquidity: Boolean!
+}
+
+type LiquidityManagement @entity {
+  "Unique identifier for the LiquidityManagement"
+  id: Bytes!
+  "The Pool this LiquidityManagement is associated with"
+  pool: Pool!
+  "Indicates whether unbalanced liquidity is disabled"
+  disableUnbalancedLiquidity: Boolean!
+  "Indicates whether custom add liquidity is enabled"
+  enableAddLiquidityCustom: Boolean!
+  "Indicates whether custom remove liquidity is enabled"
+  enableRemoveLiquidityCustom: Boolean!
+  "Indicates whether donation is enabled"
+  enableDonation: Boolean!
+}
+
+type PoolToken @entity {
+  "Unique identifier for the PoolToken"
+  id: Bytes!
+  "The Pool this token belongs to"
+  pool: Pool!
+  "Index of this token in the Pool"
+  index: Int!
+  "Name of the token"
+  name: String!
+  "Symbol of the token"
+  symbol: String!
+  "Number of decimal places for the token"
+  decimals: Int!
+  "Address of the token"
+  address: Bytes!
+  "Current balance of this token in the Pool"
+  balance: BigDecimal!
+  "Total volume of this token traded in the Pool"
+  volume: BigDecimal!
+  "Buffer associated with this token, if any"
+  buffer: Buffer
+  "Nested Pool associated with this token, if any"
+  nestedPool: Pool
+  "Current price rate for this token"
+  priceRate: BigDecimal!
+  "Total protocol swap fees collected for this token"
+  totalProtocolSwapFee: BigDecimal!
+  "Total protocol yield fees collected for this token"
+  totalProtocolYieldFee: BigDecimal!
+  "Indicates whether this token pays yield fees"
+  paysYieldFees: Boolean!
+}
+
+type Token @entity {
+  "Unique identifier for the Token"
+  id: Bytes!
+  "Name of the token"
+  name: String!
+  "Symbol of the token"
+  symbol: String!
+  "Number of decimal places for the token"
+  decimals: Int!
+  "Address of the token"
+  address: Bytes!
+}
+
+type RateProvider @entity {
+  "Unique identifier for the RateProvider"
+  id: Bytes!
+  "The Pool this RateProvider is associated with"
+  pool: Pool!
+  "The token this RateProvider is for"
+  token: PoolToken!
+  "Address of the RateProvider"
+  address: Bytes!
+}
+
+type Buffer @entity {
+  "Unique identifier for the Buffer"
+  id: Bytes!
+  "The wrapped token in this Buffer"
+  wrappedToken: Token!
+  "The underlying token in this Buffer"
+  underlyingToken: Token!
+  "Balance of the wrapped token in this Buffer"
+  wrappedBalance: BigDecimal!
+  "Balance of the underlying token in this Buffer"
+  underlyingBalance: BigDecimal!
+  "Total shares of this Buffer"
+  totalShares: BigDecimal!
+}
+
+type BufferShare @entity {
+  "Unique identifier for the BufferShare"
+  id: Bytes!
+  "The user who owns this share"
+  user: User!
+  "The Buffer this share is for"
+  buffer: Buffer!
+  "Balance of this share"
+  balance: BigDecimal!
+}
+
+type Swap @entity(immutable: true) {
+  "Unique identifier for the Swap"
+  id: Bytes!
+  "Address of the Pool where the swap occurred"
+  pool: Bytes!
+  "Address of the token being swapped in"
+  tokenIn: Bytes!
+  "Symbol of the token being swapped in"
+  tokenInSymbol: String!
+  "Symbol of the token being swapped out"
+  tokenOutSymbol: String!
+  "Amount of tokens swapped out"
+  tokenAmountOut: BigDecimal!
+  "Address of the token being swapped out"
+  tokenOut: Bytes!
+  "Amount of tokens swapped in"
+  tokenAmountIn: BigDecimal!
+  "Address of the token used for swap fees"
+  swapFeeToken: Bytes!
+  "Amount of swap fees"
+  swapFeeAmount: BigDecimal!
+  "User who performed the swap"
+  user: User!
+  "Block number when the swap occurred"
+  blockNumber: BigInt!
+  "Timestamp of the block when the swap occurred"
+  blockTimestamp: BigInt!
+  "Hash of the transaction containing the swap"
+  transactionHash: Bytes!
+  "Log index of the swap event in the transaction"
+  logIndex: BigInt!
+}
+
+enum InvestType {
+  Add
+  Remove
+}
+
+type AddRemove @entity(immutable: true) {
+  "Unique identifier for the AddRemove event"
+  id: Bytes!
+  "Type of investment (Add or Remove)"
+  type: InvestType!
+  "Address of the sender"
+  sender: Bytes!
+  "Amounts of tokens added or removed"
+  amounts: [BigDecimal!]!
+  "The Pool where liquidity was added or removed"
+  pool: Pool!
+  "User who performed the add or remove action"
+  user: User!
+  "Block number when the event occurred"
+  blockNumber: BigInt!
+  "Timestamp of the block when the event occurred"
+  blockTimestamp: BigInt!
+  "Hash of the transaction containing the event"
+  transactionHash: Bytes!
+  "Log index of the event in the transaction"
+  logIndex: BigInt!
+}
+
+type PoolShare @entity {
+  "Unique identifier for the PoolShare"
+  id: ID!
+  "The Pool this share is for"
+  pool: Pool!
+  "The user who owns this share"
+  user: User!
+  "Balance of this share"
+  balance: BigDecimal!
+}
+
+type PoolSnapshot @entity {
+  "Unique identifier for the PoolSnapshot"
+  id: ID!
+  "The Pool this snapshot is for"
+  pool: Pool!
+  "Timestamp when this snapshot was taken"
+  timestamp: Int!
+  "Total shares of the Pool at the time of the snapshot"
+  totalShares: BigDecimal!
+  "Number of swaps performed in the Pool at the time of the snapshot"
+  swapsCount: BigInt!
+  "Number of unique holders of the Pool's tokens at the time of the snapshot"
+  holdersCount: BigInt!
+  "Balances of each token in the Pool at the time of the snapshot"
+  balances: [BigDecimal!]!
+  "Total swap fees collected for each token at the time of the snapshot"
+  totalSwapFees: [BigDecimal!]!
+  "Total swap volumes for each token at the time of the snapshot"
+  totalSwapVolumes: [BigDecimal!]!
+  "Total protocol swap fees collected for each token at the time of the snapshot"
+  totalProtocolSwapFees: [BigDecimal!]!
+  "Total protocol yield fees collected for each token at the time of the snapshot"
+  totalProtocolYieldFees: [BigDecimal!]!
+}
+
+type User @entity {
+  "Unique identifier for the User (typically their address)"
+  id: Bytes!
+  "Swaps performed by this user"
+  swaps: [Swap!] @derivedFrom(field: "user")
+  "Pool shares owned by this user"
+  shares: [PoolShare!] @derivedFrom(field: "user")
+  "Add/Remove liquidity events performed by this user"
+  addRemoves: [AddRemove!] @derivedFrom(field: "user")
+}

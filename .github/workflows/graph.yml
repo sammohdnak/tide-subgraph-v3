@@ -1,0 +1,71 @@
+name: Deploy Graph Studio Prod
+on:
+  push:
+    branches: main
+
+jobs:
+  deploy-pools-sepolia:
+    runs-on: ubuntu-latest
+    environment: graph
+    defaults:
+      run:
+        working-directory: subgraphs/pools
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 7
+      - name: Install dependencies
+        run: pnpm install
+      - name: Generate manifests
+        run: pnpm generate-manifests
+      - name: Graph Codegen
+        run: pnpm codegen
+      - name: Graph Build
+        run: pnpm build
+      - uses: balancer-labs/graph-deploy@v0.0.1
+        with:
+          graph_deploy_key: ${{secrets.GRAPH_DEPLOY_KEY}}
+          graph_version_label: ${GITHUB_SHA::8}
+          graph_subgraph_name: "balancer-pools-v3-sepolia-7th"
+          graph_account: "mendesfabio"
+          graph_config_file: "subgraph.sepolia.yaml"
+          graph_deploy_studio: true
+
+  deploy-vault-sepolia:
+    runs-on: ubuntu-latest
+    environment: graph
+    defaults:
+      run:
+        working-directory: subgraphs/vault
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 7
+      - name: Install dependencies
+        run: pnpm install
+      - name: Generate manifests
+        run: pnpm generate-manifests
+      - name: Graph Codegen
+        run: pnpm codegen
+      - name: Graph Build
+        run: pnpm build
+      - uses: balancer-labs/graph-deploy@v0.0.1
+        with:
+          graph_deploy_key: ${{secrets.GRAPH_DEPLOY_KEY}}
+          graph_version_label: ${GITHUB_SHA::8}
+          graph_subgraph_name: "balancer-v3-sepolia-7th"
+          graph_account: "mendesfabio"
+          graph_config_file: "subgraph.sepolia.yaml"
+          graph_deploy_studio: true

@@ -1,0 +1,432 @@
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import {
+  LiquidityAddedToBuffer,
+  LiquidityRemovedFromBuffer,
+  PoolBalanceChanged,
+  PoolRegistered,
+  Swap as SwapEvent,
+} from "../types/Vault/Vault";
+import {
+  Buffer,
+  BufferShare,
+  Pool,
+  Swap,
+  AddRemove,
+  Hook,
+  HookConfig,
+  LiquidityManagement,
+} from "../types/schema";
+import {
+  createPoolSnapshot,
+  createPoolToken,
+  createRateProvider,
+  createUser,
+  getToken,
+  getVault,
+  loadPoolToken,
+  updateProtocolFeeAmounts,
+} from "../helpers/entities";
+import { ZERO_BD, ZERO_BI } from "../helpers/constants";
+import { scaleDown } from "../helpers/misc";
+import { BPT } from "../types/templates";
+import { ERC20 } from "../types/Vault/ERC20";
+import { VaultExtension } from "../types/Vault/VaultExtension";
+import { ERC4626 } from "../types/Vault/ERC4626";
+
+/************************************
+ ******* POOLS REGISTRATIONS ********
+ ************************************/
+
+export function handlePoolRegistered(event: PoolRegistered): void {
+  let vault = getVault(event.address);
+  let poolAddress = event.params.pool;
+
+  let pool = new Pool(poolAddress);
+  pool.vault = vault.id;
+  pool.address = poolAddress;
+  pool.factory = event.params.factory;
+  pool.pauseWindowEndTime = event.params.pauseWindowEndTime;
+  pool.pauseManager = event.params.roleAccounts.pauseManager;
+  pool.totalShares = ZERO_BD;
+  pool.isInitialized = false;
+  pool.swapsCount = ZERO_BI;
+  pool.holdersCount = ZERO_BI;
+
+  let poolContract = ERC20.bind(poolAddress);
+  let symbolCall = poolContract.try_symbol();
+  let nameCall = poolContract.try_name();
+
+  pool.name = nameCall.reverted ? "" : nameCall.value;
+  pool.symbol = symbolCall.reverted ? "" : symbolCall.value;
+
+  let vaultContract = VaultExtension.bind(event.address);
+  let swapFeeCall = vaultContract.try_getStaticSwapFeePercentage(poolAddress);
+
+  pool.swapFee = swapFeeCall.reverted
+    ? ZERO_BD
+    : scaleDown(swapFeeCall.value, 18);
+
+  pool.blockNumber = event.block.number;
+  pool.blockTimestamp = event.block.timestamp;
+  pool.transactionHash = event.transaction.hash;
+
+  for (let i: i32 = 0; i < event.params.tokenConfig.length; i++) {
+    let tokenConfig = event.params.tokenConfig[i];
+    createPoolToken(poolAddress, tokenConfig, i);
+    createRateProvider(poolAddress, tokenConfig);
+  }
+
+  let hookAddress = event.params.hooksConfig.hooksContract;
+  let hook = Hook.load(hookAddress);
+  if (!hook) {
+    hook = new Hook(hookAddress);
+    hook.address = hookAddress;
+    hook.save();
+  }
+
+  let hookConfig = new HookConfig(hookAddress.concat(poolAddress));
+  hookConfig.pool = poolAddress;
+  hookConfig.hook = hookAddress;
+  hookConfig.enableHookAdjustedAmounts =
+    event.params.hooksConfig.enableHookAdjustedAmounts;
+  hookConfig.shouldCallBeforeInitialize =
+    event.params.hooksConfig.shouldCallBeforeInitialize;
+  hookConfig.shouldCallAfterInitialize =
+    event.params.hooksConfig.shouldCallAfterInitialize;
+  hookConfig.shouldCallComputeDynamicSwapFee =
+    event.params.hooksConfig.shouldCallComputeDynamicSwapFee;
+  hookConfig.shouldCallBeforeSwap =
+    event.params.hooksConfig.shouldCallBeforeSwap;
+  hookConfig.shouldCallAfterSwap = event.params.hooksConfig.shouldCallAfterSwap;
+  hookConfig.shouldCallBeforeAddLiquidity =
+    event.params.hooksConfig.shouldCallBeforeAddLiquidity;
+  hookConfig.shouldCallAfterAddLiquidity =
+    event.params.hooksConfig.shouldCallAfterAddLiquidity;
+  hookConfig.shouldCallBeforeRemoveLiquidity =
+    event.params.hooksConfig.shouldCallBeforeRemoveLiquidity;
+  hookConfig.shouldCallAfterRemoveLiquidity =
+    event.params.hooksConfig.shouldCallAfterRemoveLiquidity;
+  hookConfig.save();
+
+  let liquidityManagement = new LiquidityManagement(poolAddress);
+  liquidityManagement.pool = poolAddress;
+  liquidityManagement.enableRemoveLiquidityCustom =
+    event.params.liquidityManagement.enableRemoveLiquidityCustom;
+  liquidityManagement.disableUnbalancedLiquidity =
+    event.params.liquidityManagement.disableUnbalancedLiquidity;
+  liquidityManagement.enableAddLiquidityCustom =
+    event.params.liquidityManagement.enableAddLiquidityCustom;
+  liquidityManagement.enableDonation =
+    event.params.liquidityManagement.enableDonation;
+  liquidityManagement.save();
+
+  pool.liquidityManagement = liquidityManagement.id;
+  pool.hookConfig = hookConfig.id;
+  pool.hook = hook.id;
+  pool.save();
+
+  createPoolSnapshot(pool, event.block.timestamp.toI32());
+
+  BPT.create(poolAddress);
+}
+
+/************************************
+ ****** DEPOSITS & WITHDRAWALS ******
+ ************************************/
+
+export function handlePoolBalanceChanged(event: PoolBalanceChanged): void {
+  let amounts: BigInt[] = event.params.deltas;
+
+  if (amounts.length === 0) {
+    return;
+  }
+
+  createUser(event.params.liquidityProvider);
+
+  let total: BigInt = amounts.reduce<BigInt>(
+    (sum, amount) => sum.plus(amount),
+    new BigInt(0)
+  );
+  if (total.gt(ZERO_BI)) {
+    handlePoolJoined(event);
+  } else {
+    handlePoolExited(event);
+  }
+}
+
+function handlePoolJoined(event: PoolBalanceChanged): void {
+  let poolAddress = event.params.pool;
+  let amounts: BigInt[] = event.params.deltas;
+
+  let transactionHash = event.transaction.hash;
+  let logIndex = event.logIndex;
+
+  let pool = Pool.load(poolAddress);
+  if (pool == null) {
+    log.warning("Pool not found in handlePoolJoined: {} {}", [
+      poolAddress.toHex(),
+      transactionHash.toHex(),
+    ]);
+    return;
+  }
+
+  pool.isInitialized = true;
+  pool.save();
+
+  let joinId = transactionHash.concatI32(logIndex.toI32());
+  let join = new AddRemove(joinId);
+
+  let poolTokens = pool.tokens.load();
+  let joinAmounts = new Array<BigDecimal>(amounts.length);
+
+  for (let i: i32 = 0; i < poolTokens.length; i++) {
+    let poolToken = poolTokens[i];
+    let joinAmount = scaleDown(event.params.deltas[i], poolToken.decimals);
+    joinAmounts[i] = joinAmount;
+    poolToken.balance = poolToken.balance.plus(joinAmount);
+    poolToken.save();
+  }
+
+  join.type = "Add";
+  join.sender = event.params.liquidityProvider;
+  join.amounts = joinAmounts;
+  join.pool = poolAddress;
+  join.user = event.params.liquidityProvider;
+  join.logIndex = logIndex;
+  join.blockNumber = event.block.number;
+  join.blockTimestamp = event.block.timestamp;
+  join.transactionHash = transactionHash;
+  join.save();
+
+  createPoolSnapshot(pool, event.block.timestamp.toI32());
+}
+
+function handlePoolExited(event: PoolBalanceChanged): void {
+  let poolAddress = event.params.pool;
+  let amounts: BigInt[] = event.params.deltas;
+
+  let transactionHash = event.transaction.hash;
+  let logIndex = event.logIndex;
+
+  let pool = Pool.load(poolAddress);
+  if (pool == null) {
+    log.warning("Pool not found in handlePoolJoined: {} {}", [
+      poolAddress.toHex(),
+      transactionHash.toHex(),
+    ]);
+    return;
+  }
+
+  let exitId = transactionHash.concatI32(logIndex.toI32());
+  let exit = new AddRemove(exitId);
+
+  let poolTokens = pool.tokens.load();
+  let exitAmounts = new Array<BigDecimal>(amounts.length);
+
+  for (let i: i32 = 0; i < poolTokens.length; i++) {
+    let poolToken = poolTokens[i];
+    let exitAmount = scaleDown(
+      event.params.deltas[i].neg(),
+      poolToken.decimals
+    );
+    exitAmounts[i] = exitAmount;
+    poolToken.balance = poolToken.balance.minus(exitAmount);
+    poolToken.save();
+  }
+
+  exit.type = "Remove";
+  exit.sender = event.params.liquidityProvider;
+  exit.amounts = exitAmounts;
+  exit.pool = poolAddress;
+  exit.user = event.params.liquidityProvider;
+  exit.logIndex = logIndex;
+  exit.blockNumber = event.block.number;
+  exit.blockTimestamp = event.block.timestamp;
+  exit.transactionHash = transactionHash;
+  exit.save();
+
+  createPoolSnapshot(pool, event.block.timestamp.toI32());
+}
+
+/************************************
+ ************** SWAPS ***************
+ ************************************/
+
+export function handleSwap(event: SwapEvent): void {
+  createUser(event.transaction.from);
+
+  let swap = new Swap(event.transaction.hash.concatI32(event.logIndex.toI32()));
+
+  let tokenIn = getToken(event.params.tokenIn);
+  let tokenOut = getToken(event.params.tokenOut);
+  let swapFeeToken = getToken(event.params.swapFeeToken);
+
+  let tokenAmountIn = scaleDown(event.params.amountIn, tokenIn.decimals);
+  let tokenAmountOut = scaleDown(event.params.amountOut, tokenOut.decimals);
+  let swapFeeAmount = scaleDown(
+    event.params.swapFeeAmount,
+    swapFeeToken.decimals
+  );
+
+  swap.pool = event.params.pool;
+  swap.tokenIn = event.params.tokenIn;
+  swap.tokenInSymbol = tokenIn.symbol;
+  swap.tokenAmountIn = tokenAmountIn;
+  swap.tokenOut = event.params.tokenOut;
+  swap.tokenOutSymbol = tokenOut.symbol;
+  swap.tokenAmountOut = tokenAmountOut;
+  swap.swapFeeToken = event.params.swapFeeToken;
+  swap.swapFeeAmount = swapFeeAmount;
+  swap.user = event.transaction.from;
+
+  swap.logIndex = event.logIndex;
+  swap.blockNumber = event.block.number;
+  swap.blockTimestamp = event.block.timestamp;
+  swap.transactionHash = event.transaction.hash;
+
+  swap.save();
+
+  let poolAddress = event.params.pool;
+
+  let pool = Pool.load(poolAddress);
+  if (pool == null) {
+    log.warning("Pool not found in handleSwap: {} {}", [
+      poolAddress.toHex(),
+      event.transaction.hash.toHex(),
+    ]);
+    return;
+  }
+
+  pool.swapsCount = pool.swapsCount.plus(BigInt.fromI32(1));
+  pool.save();
+
+  let tokenInAddress = event.params.tokenIn;
+  let tokenOutAddress = event.params.tokenOut;
+
+  let poolTokenIn = loadPoolToken(poolAddress, tokenInAddress);
+  let poolTokenOut = loadPoolToken(poolAddress, tokenOutAddress);
+  if (poolTokenIn == null || poolTokenOut == null) {
+    log.warning(
+      "PoolToken not found in handleSwap: (tokenIn: {}), (tokenOut: {})",
+      [tokenInAddress.toHexString(), tokenOutAddress.toHexString()]
+    );
+    return;
+  }
+
+  let newInAmount = poolTokenIn.balance.plus(tokenAmountIn);
+  poolTokenIn.balance = newInAmount;
+  poolTokenIn.volume = poolTokenIn.volume.plus(tokenAmountIn);
+  poolTokenIn.save();
+
+  let newOutAmount = poolTokenOut.balance.minus(tokenAmountOut);
+  poolTokenOut.balance = newOutAmount;
+  poolTokenOut.volume = poolTokenOut.volume.plus(tokenAmountOut);
+  poolTokenOut.save();
+
+  updateProtocolFeeAmounts(pool);
+  createPoolSnapshot(pool, event.block.timestamp.toI32());
+}
+
+/************************************
+ ************* BUFFERS **************
+ ************************************/
+
+export function handleLiquidityAddedToBuffer(
+  event: LiquidityAddedToBuffer
+): void {
+  let erc4626 = ERC4626.bind(event.params.wrappedToken);
+  let asset = erc4626.try_asset();
+  if (asset.reverted) return;
+
+  let wrappedToken = getToken(event.params.wrappedToken);
+  let underlyingToken = getToken(asset.value);
+
+  let buffer = Buffer.load(wrappedToken.address);
+
+  if (!buffer) {
+    buffer = new Buffer(wrappedToken.address);
+    buffer.wrappedToken = wrappedToken.id;
+    buffer.underlyingToken = underlyingToken.id;
+    buffer.wrappedBalance = ZERO_BD;
+    buffer.underlyingBalance = ZERO_BD;
+    buffer.totalShares = ZERO_BD;
+  }
+
+  let issuedShares = scaleDown(event.params.issuedShares, 18);
+  let amountWrapped = scaleDown(
+    event.params.amountWrapped,
+    wrappedToken.decimals
+  );
+  let amountUnderlying = scaleDown(
+    event.params.amountUnderlying,
+    wrappedToken.decimals
+  );
+
+  buffer.totalShares = buffer.totalShares.plus(issuedShares);
+  buffer.wrappedBalance = buffer.wrappedBalance.plus(amountWrapped);
+  buffer.underlyingBalance = buffer.underlyingBalance.plus(amountUnderlying);
+
+  buffer.save();
+
+  createUser(event.params.sharesOwner);
+
+  let bufferShareId = wrappedToken.address.concat(event.params.sharesOwner);
+  let bufferShare = BufferShare.load(bufferShareId);
+
+  if (!bufferShare) {
+    bufferShare = new BufferShare(bufferShareId);
+    bufferShare.user = event.params.sharesOwner;
+    bufferShare.buffer = buffer.id;
+    bufferShare.balance = ZERO_BD;
+  }
+
+  bufferShare.balance = bufferShare.balance.plus(issuedShares);
+  bufferShare.save();
+}
+
+export function handleLiquidityRemovedFromBuffer(
+  event: LiquidityRemovedFromBuffer
+): void {
+  let wrappedToken = getToken(event.params.wrappedToken);
+
+  let buffer = Buffer.load(wrappedToken.address);
+
+  if (!buffer) {
+    buffer = new Buffer(wrappedToken.address);
+    buffer.wrappedToken = wrappedToken.id;
+    buffer.wrappedBalance = ZERO_BD;
+    buffer.underlyingBalance = ZERO_BD;
+    buffer.totalShares = ZERO_BD;
+  }
+
+  let removedShares = scaleDown(event.params.removedShares, 18);
+  let amountWrapped = scaleDown(
+    event.params.amountWrapped,
+    wrappedToken.decimals
+  );
+  let amountUnderlying = scaleDown(
+    event.params.amountUnderlying,
+    wrappedToken.decimals
+  );
+
+  buffer.totalShares = buffer.totalShares.minus(removedShares);
+  buffer.wrappedBalance = buffer.wrappedBalance.minus(amountWrapped);
+  buffer.underlyingBalance = buffer.underlyingBalance.minus(amountUnderlying);
+
+  buffer.save();
+
+  createUser(event.params.sharesOwner);
+
+  let bufferShareId = wrappedToken.address.concat(event.params.sharesOwner);
+  let bufferShare = BufferShare.load(bufferShareId);
+
+  if (!bufferShare) {
+    bufferShare = new BufferShare(bufferShareId);
+    bufferShare.user = event.params.sharesOwner;
+    bufferShare.buffer = buffer.id;
+    bufferShare.balance = ZERO_BD;
+  }
+
+  bufferShare.balance = bufferShare.balance.minus(removedShares);
+  bufferShare.save();
+}

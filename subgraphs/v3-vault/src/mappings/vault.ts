@@ -1,5 +1,7 @@
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import {
+  BufferSharesBurned,
+  BufferSharesMinted,
   LiquidityAddedToBuffer,
   LiquidityRemovedFromBuffer,
   PoolBalanceChanged,
@@ -26,7 +28,7 @@ import {
   loadPoolToken,
   updateProtocolFeeAmounts,
 } from "../helpers/entities";
-import { ZERO_BD, ZERO_BI } from "../helpers/constants";
+import { ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../helpers/constants";
 import { scaleDown } from "../helpers/misc";
 import { BPT } from "../types/templates";
 import { ERC20 } from "../types/Vault/ERC20";
@@ -145,7 +147,7 @@ export function handlePoolBalanceChanged(event: PoolBalanceChanged): void {
 
   let total: BigInt = amounts.reduce<BigInt>(
     (sum, amount) => sum.plus(amount),
-    new BigInt(0)
+    ZERO_BI
   );
   if (total.gt(ZERO_BI)) {
     handlePoolJoined(event);
@@ -259,7 +261,7 @@ export function handleSwap(event: SwapEvent): void {
 
   let tokenIn = getToken(event.params.tokenIn);
   let tokenOut = getToken(event.params.tokenOut);
-  let swapFeeToken = getToken(event.params.swapFeeToken);
+  let swapFeeToken = getToken(event.params.tokenIn);
 
   let tokenAmountIn = scaleDown(event.params.amountIn, tokenIn.decimals);
   let tokenAmountOut = scaleDown(event.params.amountOut, tokenOut.decimals);
@@ -275,8 +277,9 @@ export function handleSwap(event: SwapEvent): void {
   swap.tokenOut = event.params.tokenOut;
   swap.tokenOutSymbol = tokenOut.symbol;
   swap.tokenAmountOut = tokenAmountOut;
-  swap.swapFeeToken = event.params.swapFeeToken;
   swap.swapFeeAmount = swapFeeAmount;
+  swap.swapFeeToken = event.params.tokenIn;
+  swap.swapFeePercentage = scaleDown(event.params.swapFeePercentage, 18);
   swap.user = event.transaction.from;
 
   swap.logIndex = event.logIndex;
@@ -331,51 +334,88 @@ export function handleSwap(event: SwapEvent): void {
  ************* BUFFERS **************
  ************************************/
 
+export function getBuffer(wrappedTokenAddress: Address): Buffer {
+  let buffer = Buffer.load(wrappedTokenAddress);
+
+  if (buffer) return buffer;
+
+  let erc4626Contract = ERC4626.bind(wrappedTokenAddress);
+  let asset = erc4626Contract.try_asset();
+  let underlyingTokenAddress = asset.reverted ? ZERO_ADDRESS : asset.value;
+
+  let wrappedToken = getToken(wrappedTokenAddress);
+  let underlyingToken = getToken(underlyingTokenAddress);
+
+  buffer = new Buffer(wrappedTokenAddress);
+  buffer.wrappedToken = wrappedToken.id;
+  buffer.underlyingToken = underlyingToken.id;
+  buffer.wrappedBalance = ZERO_BD;
+  buffer.underlyingBalance = ZERO_BD;
+  buffer.totalShares = ZERO_BD;
+
+  return buffer;
+}
+
 export function handleLiquidityAddedToBuffer(
   event: LiquidityAddedToBuffer
 ): void {
-  let erc4626 = ERC4626.bind(event.params.wrappedToken);
-  let asset = erc4626.try_asset();
-  if (asset.reverted) return;
+  let buffer = getBuffer(event.params.wrappedToken);
 
-  let wrappedToken = getToken(event.params.wrappedToken);
-  let underlyingToken = getToken(asset.value);
+  let wrappedToken = getToken(changetype<Address>(buffer.wrappedToken));
+  let underlyingToken = getToken(changetype<Address>(buffer.underlyingToken));
 
-  let buffer = Buffer.load(wrappedToken.address);
-
-  if (!buffer) {
-    buffer = new Buffer(wrappedToken.address);
-    buffer.wrappedToken = wrappedToken.id;
-    buffer.underlyingToken = underlyingToken.id;
-    buffer.wrappedBalance = ZERO_BD;
-    buffer.underlyingBalance = ZERO_BD;
-    buffer.totalShares = ZERO_BD;
-  }
-
-  let issuedShares = scaleDown(event.params.issuedShares, 18);
   let amountWrapped = scaleDown(
     event.params.amountWrapped,
     wrappedToken.decimals
   );
   let amountUnderlying = scaleDown(
     event.params.amountUnderlying,
-    wrappedToken.decimals
+    underlyingToken.decimals
   );
 
-  buffer.totalShares = buffer.totalShares.plus(issuedShares);
   buffer.wrappedBalance = buffer.wrappedBalance.plus(amountWrapped);
   buffer.underlyingBalance = buffer.underlyingBalance.plus(amountUnderlying);
 
   buffer.save();
+}
 
-  createUser(event.params.sharesOwner);
+export function handleLiquidityRemovedFromBuffer(
+  event: LiquidityRemovedFromBuffer
+): void {
+  let buffer = getBuffer(event.params.wrappedToken);
 
-  let bufferShareId = wrappedToken.address.concat(event.params.sharesOwner);
+  let wrappedToken = getToken(changetype<Address>(buffer.wrappedToken));
+  let underlyingToken = getToken(changetype<Address>(buffer.underlyingToken));
+
+  let amountWrapped = scaleDown(
+    event.params.amountWrapped,
+    wrappedToken.decimals
+  );
+  let amountUnderlying = scaleDown(
+    event.params.amountUnderlying,
+    underlyingToken.decimals
+  );
+
+  buffer.wrappedBalance = buffer.wrappedBalance.minus(amountWrapped);
+  buffer.underlyingBalance = buffer.underlyingBalance.minus(amountUnderlying);
+
+  buffer.save();
+}
+
+export function handleBufferSharesMinted(event: BufferSharesMinted): void {
+  createUser(event.params.to);
+
+  let buffer = getBuffer(event.params.wrappedToken);
+  let issuedShares = scaleDown(event.params.issuedShares, 18);
+  buffer.totalShares = buffer.totalShares.plus(issuedShares);
+  buffer.save();
+
+  let bufferShareId = buffer.id.concat(event.params.to);
   let bufferShare = BufferShare.load(bufferShareId);
 
   if (!bufferShare) {
     bufferShare = new BufferShare(bufferShareId);
-    bufferShare.user = event.params.sharesOwner;
+    bufferShare.user = event.params.to;
     bufferShare.buffer = buffer.id;
     bufferShare.balance = ZERO_BD;
   }
@@ -384,49 +424,24 @@ export function handleLiquidityAddedToBuffer(
   bufferShare.save();
 }
 
-export function handleLiquidityRemovedFromBuffer(
-  event: LiquidityRemovedFromBuffer
-): void {
-  let wrappedToken = getToken(event.params.wrappedToken);
+export function handleBufferSharesBurned(event: BufferSharesBurned): void {
+  createUser(event.params.from);
 
-  let buffer = Buffer.load(wrappedToken.address);
-
-  if (!buffer) {
-    buffer = new Buffer(wrappedToken.address);
-    buffer.wrappedToken = wrappedToken.id;
-    buffer.wrappedBalance = ZERO_BD;
-    buffer.underlyingBalance = ZERO_BD;
-    buffer.totalShares = ZERO_BD;
-  }
-
-  let removedShares = scaleDown(event.params.removedShares, 18);
-  let amountWrapped = scaleDown(
-    event.params.amountWrapped,
-    wrappedToken.decimals
-  );
-  let amountUnderlying = scaleDown(
-    event.params.amountUnderlying,
-    wrappedToken.decimals
-  );
-
-  buffer.totalShares = buffer.totalShares.minus(removedShares);
-  buffer.wrappedBalance = buffer.wrappedBalance.minus(amountWrapped);
-  buffer.underlyingBalance = buffer.underlyingBalance.minus(amountUnderlying);
-
+  let buffer = getBuffer(event.params.wrappedToken);
+  let burnedShares = scaleDown(event.params.burnedShares, 18);
+  buffer.totalShares = buffer.totalShares.minus(burnedShares);
   buffer.save();
 
-  createUser(event.params.sharesOwner);
-
-  let bufferShareId = wrappedToken.address.concat(event.params.sharesOwner);
+  let bufferShareId = event.params.wrappedToken.concat(event.params.from);
   let bufferShare = BufferShare.load(bufferShareId);
 
   if (!bufferShare) {
     bufferShare = new BufferShare(bufferShareId);
-    bufferShare.user = event.params.sharesOwner;
+    bufferShare.user = event.params.from;
     bufferShare.buffer = buffer.id;
     bufferShare.balance = ZERO_BD;
   }
 
-  bufferShare.balance = bufferShare.balance.minus(removedShares);
+  bufferShare.balance = bufferShare.balance.minus(burnedShares);
   bufferShare.save();
 }

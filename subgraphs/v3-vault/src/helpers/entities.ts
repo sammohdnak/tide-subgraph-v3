@@ -14,7 +14,6 @@ import { ONE_BD, ZERO_ADDRESS, ZERO_BD } from "./constants";
 import { PoolRegisteredTokenConfigStruct } from "../types/Vault/Vault";
 import { ERC20 } from "../types/Vault/ERC20";
 import { VaultExtension } from "../types/Vault/VaultExtension";
-import { ProtocolFeeController } from "../types/Vault/ProtocolFeeController";
 import { scaleDown } from "./misc";
 
 const DAY = 24 * 60 * 60;
@@ -119,6 +118,9 @@ export function createPoolToken(
   poolToken.decimals = token.decimals;
 
   let buffer = Buffer.load(tokenConfig.token);
+
+  let decimalDiff = 18 - poolToken.decimals;
+  poolToken.scalingFactor = BigInt.fromI32(10).pow(u8(decimalDiff));
 
   poolToken.pool = poolAddress;
   poolToken.address = tokenConfig.token;

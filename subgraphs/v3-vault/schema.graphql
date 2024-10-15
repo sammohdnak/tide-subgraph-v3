@@ -143,6 +143,8 @@ type PoolToken @entity {
   nestedPool: Pool
   "Current price rate for this token"
   priceRate: BigDecimal!
+  "Scaling factor for this token"
+  scalingFactor: BigInt!
   "Total protocol swap fees collected for this token"
   totalProtocolSwapFee: BigDecimal!
   "Total protocol yield fees collected for this token"
@@ -222,6 +224,8 @@ type Swap @entity(immutable: true) {
   swapFeeToken: Bytes!
   "Amount of swap fees"
   swapFeeAmount: BigDecimal!
+  "Swap fee percentage"
+  swapFeePercentage: BigDecimal!
   "User who performed the swap"
   user: User!
   "Block number when the swap occurred"

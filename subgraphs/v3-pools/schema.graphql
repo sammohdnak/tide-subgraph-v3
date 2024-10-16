@@ -37,8 +37,6 @@ type Pool @entity {
   address: Bytes!
   "Factory that created this Pool"
   factory: Factory!
-  "Type of the pool"
-  type: PoolType!
   "Parameters for Weighted pools (null for other pool types)"
   weightedParams: WeightedParams
   "Parameters for Stable pools (null for other pool types)"

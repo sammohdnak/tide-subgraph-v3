@@ -4,7 +4,7 @@ To integrate new pool types into the Balancer subgraph, follow these steps below
 
 ## Setup
 
-Navigate to the `subgraphs/v3-pools` directory before starting the integration process.
+Navigate to the `subgraphs/v3-pools` directory and add your custom pool ABI to `abis` folder before starting the integration process.
 
 ## Updating the GraphQL Schema
 
@@ -43,13 +43,13 @@ Navigate to the `subgraphs/v3-pools` directory before starting the integration p
    }
    ```
 
-2. Save the `schema.graphql` file. Run the codegen command to generate types from your ABIs:
+2. Save the file and run the codegen command to generate types for your schema:
 
    ```bash
    pnpm codegen
    ```
 
-## Creating the Subgraph Manifest
+## Updating the Subgraph Manifest
 
 1. Update the `subgraph.sepolia.yaml` file to include your new pool factory:
 
@@ -60,8 +60,9 @@ Navigate to the `subgraphs/v3-pools` directory before starting the integration p
        name: CustomPoolFactory
        network: sepolia
        source:
-         address: "0x..." # Your custom pool factory address
          abi: BasePoolFactory
+         address: "0x..." # Your custom pool factory address
+         startBlock: 000000 # Your custom pool deployment block
        mapping:
          kind: ethereum/events
          apiVersion: 0.0.7
@@ -69,8 +70,9 @@ Navigate to the `subgraphs/v3-pools` directory before starting the integration p
          file: ./src/mappings/custom.ts
          entities:
            - Pool
-           - CustomParams
          abis:
+           - name: CustomPool
+             file: ./abis/CustomPool.json
            - name: BasePoolFactory
              file: ./abis/BasePoolFactory.json
          eventHandlers:
@@ -78,15 +80,21 @@ Navigate to the `subgraphs/v3-pools` directory before starting the integration p
              handler: handleCustomPoolCreated
    ```
 
-## Implementing Pool Factory Mapping
+2. Save the file and run the codegen command to generate types for your ABIs:
+
+```bash
+pnpm codegen
+```
+
+## Writing Mappings for the Pool Factory
 
 1. Update `src/mappings/common.ts` to include your new pool type:
 
    ```typescript
-   export class PoolType {
-     static Weighted: string = "Weighted";
-     static Stable: string = "Stable";
-     static Custom: string = "Custom"; // Add your new pool type here
+   export namespace PoolType {
+     export const Weighted = "Weighted";
+     export const Stable = "Stable";
+     export const Custom = "Custom"; // Add your new pool type here
    }
    ```
 

@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: Vault
-    network: { { network } }
+    network: {{ network }}
     source:
       abi: Vault
       address: "{{ Vault.address }}"
-      startBlock: { { Vault.startBlock } }
+      startBlock: {{ Vault.startBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -36,13 +36,13 @@ dataSources:
           handler: handleSwap
         - event: LiquidityAddedToBuffer(indexed address,uint256,uint256)
           handler: handleLiquidityAddedToBuffer
-        - event: LiquidityAddedToBuffer(indexed address,uint256,uint256)
+        - event: LiquidityRemovedFromBuffer(indexed address,uint256,uint256)
           handler: handleLiquidityRemovedFromBuffer
       file: ./src/mappings/vault.ts
 templates:
   - kind: ethereum/contract
     name: BPT
-    network: { { network } }
+    network: {{ network }}
     source:
       abi: BPT
     mapping:

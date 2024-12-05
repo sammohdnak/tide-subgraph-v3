@@ -29,8 +29,7 @@ jobs:
         working-directory: subgraphs/v3-vault
         run: >
           pnpm graph deploy
-          --studio
-          --access-token ${{secrets.GRAPH_DEPLOY_KEY}}
+          --deploy-key ${{secrets.GRAPH_DEPLOY_KEY}}
           balancer-v3
           subgraph.yaml
           --version-label ${GITHUB_SHA::8}
@@ -60,8 +59,7 @@ jobs:
         working-directory: subgraphs/v3-vault
         run: >
           pnpm graph deploy
-          --studio
-          --access-token ${{secrets.GRAPH_DEPLOY_KEY}}
+          --deploy-key ${{secrets.GRAPH_DEPLOY_KEY}}
           balancer-v3-gnosis
           subgraph.gnosis.yaml
           --version-label ${GITHUB_SHA::8}
@@ -93,8 +91,7 @@ jobs:
         working-directory: subgraphs/v3-vault
         run: >
           pnpm graph deploy
-          --studio
-          --access-token ${{secrets.GRAPH_DEPLOY_KEY}}
+          --deploy-key ${{secrets.GRAPH_DEPLOY_KEY}}
           balancer-v3-sepolia
           subgraph.sepolia.yaml
           --version-label ${GITHUB_SHA::8}

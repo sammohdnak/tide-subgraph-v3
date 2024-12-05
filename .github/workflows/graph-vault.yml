@@ -25,14 +25,15 @@ jobs:
       - name: Graph Build
         working-directory: subgraphs/v3-vault
         run: pnpm build subgraph.yaml
-      - uses: balancer-labs/graph-deploy@v1.0.0
-        with:
-          graph_deploy_key: ${{secrets.GRAPH_DEPLOY_KEY}}
-          graph_version_label: ${GITHUB_SHA::8}
-          graph_account: "balancer-labs"
-          graph_subgraph_name: "balancer-v3"
-          graph_config_file: "subgraphs/v3-vault/subgraph.yaml"
-          graph_deploy_studio: true
+      - name: Graph Deploy
+        working-directory: subgraphs/v3-vault
+        run: >
+          pnpm graph deploy
+          --studio
+          --access-token ${{secrets.GRAPH_DEPLOY_KEY}}
+          balancer-v3
+          subgraph.yaml
+          --version-label ${GITHUB_SHA::8}
 
   deploy-gnosis:
     runs-on: ubuntu-latest
@@ -55,14 +56,15 @@ jobs:
       - name: Graph Build
         working-directory: subgraphs/v3-vault
         run: pnpm build subgraph.gnosis.yaml
-      - uses: balancer-labs/graph-deploy@v1.0.0
-        with:
-          graph_deploy_key: ${{secrets.GRAPH_DEPLOY_KEY}}
-          graph_version_label: ${GITHUB_SHA::8}
-          graph_account: "balancer-labs"
-          graph_subgraph_name: "balancer-v3-gnosis"
-          graph_config_file: "subgraphs/v3-vault/subgraph.gnosis.yaml"
-          graph_deploy_studio: true
+      - name: Graph Deploy
+        working-directory: subgraphs/v3-vault
+        run: >
+          pnpm graph deploy
+          --studio
+          --access-token ${{secrets.GRAPH_DEPLOY_KEY}}
+          balancer-v3-gnosis
+          subgraph.gnosis.yaml
+          --version-label ${GITHUB_SHA::8}
 
   deploy-sepolia:
     runs-on: ubuntu-latest
@@ -89,4 +91,10 @@ jobs:
         run: pnpm build subgraph.sepolia.yaml
       - name: Graph Deploy
         working-directory: subgraphs/v3-vault
-        run: pnpm deploy --studio --deploy-key ${{secrets.GRAPH_DEPLOY_KEY}} balancer-v3-sepolia subgraph.sepolia.yaml --version-label ${GITHUB_SHA::8}
+        run: >
+          pnpm graph deploy
+          --studio
+          --access-token ${{secrets.GRAPH_DEPLOY_KEY}}
+          balancer-v3-sepolia
+          subgraph.sepolia.yaml
+          --version-label ${GITHUB_SHA::8}

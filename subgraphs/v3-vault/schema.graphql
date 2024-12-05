@@ -38,8 +38,6 @@ type Pool @entity {
   swapFee: BigDecimal!
   "Total shares of the Pool"
   totalShares: BigDecimal!
-  "Address of the pause manager for this Pool"
-  pauseManager: Bytes!
   "Timestamp when the pause window ends"
   pauseWindowEndTime: BigInt!
   "Block number when the Pool was created"
@@ -50,6 +48,13 @@ type Pool @entity {
   transactionHash: Bytes!
   "Indicates whether the Pool has been initialized"
   isInitialized: Boolean!
+
+  "Account empowered to pause/unpause the pool"
+  pauseManager: Bytes!
+  "Account empowered to set static swap fees for a pool"
+  swapFeeManager: Bytes!
+  "Account empowered to set the pool creator fee percentage"
+  poolCreator: Bytes!
 
   "Protocol swap fee percentage"
   protocolSwapFee: BigDecimal!

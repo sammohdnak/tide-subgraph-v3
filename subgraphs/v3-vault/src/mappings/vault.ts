@@ -2,9 +2,10 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import {
   BufferSharesBurned,
   BufferSharesMinted,
+  LiquidityAdded,
   LiquidityAddedToBuffer,
+  LiquidityRemoved,
   LiquidityRemovedFromBuffer,
-  PoolBalanceChanged,
   PoolRegistered,
   Swap as SwapEvent,
   Unwrap,
@@ -31,7 +32,7 @@ import {
   updateProtocolFeeAmounts,
 } from "../helpers/entities";
 import { ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../helpers/constants";
-import { scaleDown } from "../helpers/misc";
+import { hexToBigInt, scaleDown } from "../helpers/misc";
 import { BPT } from "../types/templates";
 import { ERC20 } from "../types/Vault/ERC20";
 import { VaultExtension } from "../types/Vault/VaultExtension";
@@ -50,7 +51,6 @@ export function handlePoolRegistered(event: PoolRegistered): void {
   pool.address = poolAddress;
   pool.factory = event.params.factory;
   pool.pauseWindowEndTime = event.params.pauseWindowEndTime;
-  pool.pauseManager = event.params.roleAccounts.pauseManager;
   pool.totalShares = ZERO_BD;
   pool.isInitialized = false;
   pool.swapsCount = ZERO_BI;
@@ -59,6 +59,10 @@ export function handlePoolRegistered(event: PoolRegistered): void {
   pool.protocolYieldFee = ZERO_BD;
   pool.poolCreatorSwapFee = ZERO_BD;
   pool.poolCreatorYieldFee = ZERO_BD;
+
+  pool.swapFeeManager = event.params.roleAccounts.swapFeeManager;
+  pool.pauseManager = event.params.roleAccounts.pauseManager;
+  pool.poolCreator = event.params.roleAccounts.poolCreator;
 
   let poolContract = ERC20.bind(poolAddress);
   let symbolCall = poolContract.try_symbol();
@@ -139,32 +143,12 @@ export function handlePoolRegistered(event: PoolRegistered): void {
 }
 
 /************************************
- ****** DEPOSITS & WITHDRAWALS ******
+ ********** ADDS & REMOVES **********
  ************************************/
 
-export function handlePoolBalanceChanged(event: PoolBalanceChanged): void {
-  let amounts: BigInt[] = event.params.deltas;
-
-  if (amounts.length === 0) {
-    return;
-  }
-
-  createUser(event.params.liquidityProvider);
-
-  let total: BigInt = amounts.reduce<BigInt>(
-    (sum, amount) => sum.plus(amount),
-    ZERO_BI
-  );
-  if (total.gt(ZERO_BI)) {
-    handlePoolJoined(event);
-  } else {
-    handlePoolExited(event);
-  }
-}
-
-function handlePoolJoined(event: PoolBalanceChanged): void {
+export function handleLiquidityAdded(event: LiquidityAdded): void {
   let poolAddress = event.params.pool;
-  let amounts: BigInt[] = event.params.deltas;
+  let amounts: BigInt[] = event.params.amountsAddedRaw;
 
   let transactionHash = event.transaction.hash;
   let logIndex = event.logIndex;
@@ -189,7 +173,10 @@ function handlePoolJoined(event: PoolBalanceChanged): void {
 
   for (let i: i32 = 0; i < poolTokens.length; i++) {
     let poolToken = poolTokens[i];
-    let joinAmount = scaleDown(event.params.deltas[i], poolToken.decimals);
+    let joinAmount = scaleDown(
+      event.params.amountsAddedRaw[i],
+      poolToken.decimals
+    );
     joinAmounts[i] = joinAmount;
     poolToken.balance = poolToken.balance.plus(joinAmount);
     poolToken.save();
@@ -209,9 +196,9 @@ function handlePoolJoined(event: PoolBalanceChanged): void {
   createPoolSnapshot(pool, event.block.timestamp.toI32());
 }
 
-function handlePoolExited(event: PoolBalanceChanged): void {
+export function handleLiquidityRemoved(event: LiquidityRemoved): void {
   let poolAddress = event.params.pool;
-  let amounts: BigInt[] = event.params.deltas;
+  let amounts: BigInt[] = event.params.amountsRemovedRaw;
 
   let transactionHash = event.transaction.hash;
   let logIndex = event.logIndex;
@@ -234,7 +221,7 @@ function handlePoolExited(event: PoolBalanceChanged): void {
   for (let i: i32 = 0; i < poolTokens.length; i++) {
     let poolToken = poolTokens[i];
     let exitAmount = scaleDown(
-      event.params.deltas[i].neg(),
+      event.params.amountsRemovedRaw[i],
       poolToken.decimals
     );
     exitAmounts[i] = exitAmount;
@@ -460,43 +447,60 @@ export function handleBufferSharesBurned(event: BufferSharesBurned): void {
   bufferShare.save();
 }
 
+// For Wrap/Unwrap events, bufferBalances is encoded into bytes as follows:
+// [    16 bytes       |       16 bytes      ]
+// [  wrappedBalance   |  underlyingBalance  ]
+// [MSB                                   LSB]
 export function handleUnwrap(event: Unwrap): void {
   let buffer = getBuffer(event.params.wrappedToken);
 
   let wrappedToken = getToken(changetype<Address>(buffer.wrappedToken));
   let underlyingToken = getToken(changetype<Address>(buffer.underlyingToken));
 
-  let burnedShares = scaleDown(
-    event.params.burnedShares,
+  // Convert to hex and remove the 0x prefix
+  const bufferBalances = event.params.bufferBalances.toHex().slice(2);
+
+  // Each byte represents 2 hex digits
+  // Thus each balance is represented by 32 chars
+  let wrappedBalance = bufferBalances.slice(0, 32);
+  let underlyingBalance = bufferBalances.slice(32, 64);
+
+  buffer.underlyingBalance = scaleDown(
+    hexToBigInt(underlyingBalance),
     wrappedToken.decimals
   );
-  let withdrawnUnderlying = scaleDown(
-    event.params.withdrawnUnderlying,
+  buffer.wrappedBalance = scaleDown(
+    hexToBigInt(wrappedBalance),
     underlyingToken.decimals
   );
-
-  buffer.underlyingBalance =
-    buffer.underlyingBalance.minus(withdrawnUnderlying);
-  buffer.wrappedBalance = buffer.wrappedBalance.plus(burnedShares);
   buffer.save();
 }
 
+// For Wrap/Unwrap events, bufferBalances is encoded into bytes as follows:
+// [    16 bytes       |       16 bytes      ]
+// [  wrappedBalance   |  underlyingBalance  ]
+// [MSB                                   LSB]
 export function handleWrap(event: Wrap): void {
   let buffer = getBuffer(event.params.wrappedToken);
 
   let wrappedToken = getToken(changetype<Address>(buffer.wrappedToken));
   let underlyingToken = getToken(changetype<Address>(buffer.underlyingToken));
 
-  let mintedShares = scaleDown(
-    event.params.mintedShares,
+  // Convert to hex and remove the 0x prefix
+  const bufferBalances = event.params.bufferBalances.toHex().slice(2);
+
+  // Each byte represents 2 hex digits
+  // Thus each balance is represented by 32 chars
+  let wrappedBalance = bufferBalances.slice(0, 32);
+  let underlyingBalance = bufferBalances.slice(32, 64);
+
+  buffer.underlyingBalance = scaleDown(
+    hexToBigInt(underlyingBalance),
     wrappedToken.decimals
   );
-  let depositedUnderlying = scaleDown(
-    event.params.depositedUnderlying,
+  buffer.wrappedBalance = scaleDown(
+    hexToBigInt(wrappedBalance),
     underlyingToken.decimals
   );
-
-  buffer.underlyingBalance = buffer.underlyingBalance.plus(depositedUnderlying);
-  buffer.wrappedBalance = buffer.wrappedBalance.minus(mintedShares);
   buffer.save();
 }

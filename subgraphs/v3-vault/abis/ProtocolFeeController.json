@@ -284,6 +284,27 @@
     "type": "event"
   },
   {
+    "inputs": [],
+    "name": "MAX_CREATOR_FEE_PERCENTAGE",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_PROTOCOL_SWAP_FEE_PERCENTAGE",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_PROTOCOL_YIELD_FEE_PERCENTAGE",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       { "internalType": "address", "name": "pool", "type": "address" }
     ],
@@ -562,6 +583,17 @@
       { "internalType": "address", "name": "recipient", "type": "address" }
     ],
     "name": "withdrawProtocolFees",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "pool", "type": "address" },
+      { "internalType": "address", "name": "recipient", "type": "address" },
+      { "internalType": "contract IERC20", "name": "token", "type": "address" }
+    ],
+    "name": "withdrawProtocolFeesForToken",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

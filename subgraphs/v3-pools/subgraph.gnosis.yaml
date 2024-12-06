@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: WeightedPoolFactory
-    network: {{ network }}
+    network: gnosis
     source:
       abi: BasePoolFactory
-      address: "{{ WeightedPoolFactory.address }}"
-      startBlock: {{ WeightedPoolFactory.startBlock }}
+      address: "0xEB1eeaBF0126d813589C3D2CfeFFE410D9aE3863"
+      startBlock: 37371691
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -27,11 +27,11 @@ dataSources:
       file: ./src/mappings/weighted.ts
   - kind: ethereum
     name: StablePoolFactory
-    network: {{ network }}
+    network: gnosis
     source:
       abi: BasePoolFactory
-      address: "{{ StablePoolFactory.address }}"
-      startBlock: {{ StablePoolFactory.startBlock }}
+      address: "0x22625eEDd92c81a219A83e1dc48f88d54786B017"
+      startBlock: 37371860
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

@@ -1,4 +1,4 @@
-name: Deploy Vault Subgraphs
+name: Deploy Pools Subgraphs
 on:
   push:
     branches: main
@@ -20,17 +20,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Graph Codegen
-        working-directory: subgraphs/v3-vault
+        working-directory: subgraphs/v3-pools
         run: pnpm codegen subgraph.yaml
       - name: Graph Build
-        working-directory: subgraphs/v3-vault
+        working-directory: subgraphs/v3-pools
         run: pnpm build subgraph.yaml
       - name: Graph Deploy
-        working-directory: subgraphs/v3-vault
+        working-directory: subgraphs/v3-pools
         run: >
           pnpm graph deploy
           --deploy-key ${{secrets.GRAPH_DEPLOY_KEY}}
-          balancer-v3
+          balancer-pools-v3
           subgraph.yaml
           --version-label ${GITHUB_SHA::8}
 
@@ -50,17 +50,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Graph Codegen
-        working-directory: subgraphs/v3-vault
+        working-directory: subgraphs/v3-pools
         run: pnpm codegen subgraph.gnosis.yaml
       - name: Graph Build
-        working-directory: subgraphs/v3-vault
+        working-directory: subgraphs/v3-pools
         run: pnpm build subgraph.gnosis.yaml
       - name: Graph Deploy
-        working-directory: subgraphs/v3-vault
+        working-directory: subgraphs/v3-pools
         run: >
           pnpm graph deploy
           --deploy-key ${{secrets.GRAPH_DEPLOY_KEY}}
-          balancer-v3-gnosis
+          balancer-pools-v3-gnosis
           subgraph.gnosis.yaml
           --version-label ${GITHUB_SHA::8}
 
@@ -82,16 +82,16 @@ jobs:
       - name: Generate manifests
         run: pnpm generate-manifests
       - name: Graph Codegen
-        working-directory: subgraphs/v3-vault
+        working-directory: subgraphs/v3-pools
         run: pnpm codegen subgraph.sepolia.yaml
       - name: Graph Build
-        working-directory: subgraphs/v3-vault
+        working-directory: subgraphs/v3-pools
         run: pnpm build subgraph.sepolia.yaml
       - name: Graph Deploy
-        working-directory: subgraphs/v3-vault
+        working-directory: subgraphs/v3-pools
         run: >
           pnpm graph deploy
           --deploy-key ${{secrets.GRAPH_DEPLOY_KEY}}
-          balancer-v3-sepolia
+          balancer-pools-v3-sepolia
           subgraph.sepolia.yaml
           --version-label ${GITHUB_SHA::8}

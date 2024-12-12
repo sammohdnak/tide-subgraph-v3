@@ -312,6 +312,7 @@ export function handleSwap(event: SwapEvent): void {
   let newInAmount = poolTokenIn.balance.plus(tokenAmountIn);
   poolTokenIn.balance = newInAmount;
   poolTokenIn.volume = poolTokenIn.volume.plus(tokenAmountIn);
+  poolTokenIn.totalSwapFee = poolTokenIn.totalSwapFee.plus(swapFeeAmount);
   poolTokenIn.save();
 
   let newOutAmount = poolTokenOut.balance.minus(tokenAmountOut);

@@ -151,6 +151,8 @@ type PoolToken @entity {
   balance: BigDecimal!
   "Total volume of this token traded in the Pool"
   volume: BigDecimal!
+  "Total swap fees collected for this token"
+  totalSwapFee: BigDecimal!
   "Buffer associated with this token, if any"
   buffer: Buffer
   "Nested Pool associated with this token, if any"

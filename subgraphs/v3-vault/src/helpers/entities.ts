@@ -79,7 +79,7 @@ export function createPoolSnapshot(pool: Pool, timestamp: i32): void {
   for (let i = 0; i < poolTokens.length; i++) {
     totalSwapVolumes[i] = poolTokens[i].volume;
     balances[i] = poolTokens[i].balance;
-    totalSwapFees[i] = poolTokens[i].totalProtocolSwapFee;
+    totalSwapFees[i] = poolTokens[i].totalSwapFee;
     totalProtocolSwapFees[i] = poolTokens[i].totalProtocolSwapFee;
     totalProtocolYieldFees[i] = poolTokens[i].totalProtocolYieldFee;
   }
@@ -128,6 +128,7 @@ export function createPoolToken(
   poolToken.priceRate = ONE_BD;
   poolToken.balance = ZERO_BD;
   poolToken.volume = ZERO_BD;
+  poolToken.totalSwapFee = ZERO_BD;
   poolToken.totalProtocolSwapFee = ZERO_BD;
   poolToken.totalProtocolYieldFee = ZERO_BD;
   poolToken.buffer = buffer ? buffer.id : null;

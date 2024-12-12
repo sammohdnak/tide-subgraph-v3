@@ -2,6 +2,8 @@ name: Deploy Vault Subgraphs
 on:
   push:
     branches: main
+    paths:
+      - "subgraphs/v3-vault/**"
 
 jobs:
   deploy-mainnet:

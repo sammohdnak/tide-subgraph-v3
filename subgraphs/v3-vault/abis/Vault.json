@@ -76,17 +76,17 @@
     "inputs": [
       {
         "internalType": "contract IERC20",
-        "name": "token",
+        "name": "tokenIn",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "amountIn",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "limit",
+        "name": "maxAmountIn",
         "type": "uint256"
       }
     ],
@@ -97,17 +97,17 @@
     "inputs": [
       {
         "internalType": "contract IERC20",
-        "name": "token",
+        "name": "tokenOut",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "amountOut",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "limit",
+        "name": "minAmountOut",
         "type": "uint256"
       }
     ],
@@ -148,12 +148,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "amountIn",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "limit",
+        "name": "maxAmountIn",
         "type": "uint256"
       }
     ],
@@ -164,16 +164,59 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "amountOut",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "limit",
+        "name": "minAmountOut",
         "type": "uint256"
       }
     ],
     "name": "BptAmountOutBelowMin",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IERC4626",
+        "name": "wrappedToken",
+        "type": "address"
+      }
+    ],
+    "name": "BufferAlreadyInitialized",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IERC4626",
+        "name": "wrappedToken",
+        "type": "address"
+      }
+    ],
+    "name": "BufferNotInitialized",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "BufferSharesInvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "BufferSharesInvalidReceiver",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "totalSupply",
+        "type": "uint256"
+      }
+    ],
+    "name": "BufferTotalSupplyTooLow",
     "type": "error"
   },
   {
@@ -311,17 +354,17 @@
     "inputs": [
       {
         "internalType": "contract IERC20",
-        "name": "token",
+        "name": "tokenIn",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "amountIn",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "limit",
+        "name": "maxAmountIn",
         "type": "uint256"
       }
     ],
@@ -332,17 +375,17 @@
     "inputs": [
       {
         "internalType": "contract IERC20",
-        "name": "token",
+        "name": "tokenOut",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "amountOut",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "limit",
+        "name": "minAmountOut",
         "type": "uint256"
       }
     ],
@@ -419,6 +462,17 @@
   {
     "inputs": [
       {
+        "internalType": "contract IERC4626",
+        "name": "wrappedToken",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidUnderlyingToken",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "invariantRatio",
         "type": "uint256"
@@ -469,6 +523,48 @@
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "contract IERC4626",
+        "name": "wrappedToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "expectedUnderlyingAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "actualUnderlyingAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "NotEnoughUnderlying",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IERC4626",
+        "name": "wrappedToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "expectedWrappedAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "actualWrappedAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "NotEnoughWrapped",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "NotStaticCall",
     "type": "error"
@@ -480,12 +576,12 @@
   },
   {
     "inputs": [],
-    "name": "OperationNotSupported",
+    "name": "PauseBufferPeriodDurationTooLarge",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "PauseBufferPeriodDurationTooLarge",
+    "name": "PercentageAboveMax",
     "type": "error"
   },
   {
@@ -588,6 +684,17 @@
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "totalSupply",
+        "type": "uint256"
+      }
+    ],
+    "name": "PoolTotalSupplyTooLow",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "ProtocolFeesExceedTotalCollected",
     "type": "error"
@@ -610,6 +717,17 @@
   {
     "inputs": [],
     "name": "RouterNotTrusted",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "int256",
+        "name": "value",
+        "type": "int256"
+      }
+    ],
+    "name": "SafeCastOverflowedIntToUint",
     "type": "error"
   },
   {
@@ -715,29 +833,8 @@
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "limit",
-        "type": "uint256"
-      }
-    ],
-    "name": "TotalSupplyTooLow",
-    "type": "error"
-  },
-  {
     "inputs": [],
     "name": "TradeAmountTooSmall",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "UserDataNotSupported",
     "type": "error"
   },
   {
@@ -773,7 +870,7 @@
   {
     "inputs": [
       {
-        "internalType": "address",
+        "internalType": "contract IERC4626",
         "name": "wrappedToken",
         "type": "address"
       }
@@ -789,12 +886,17 @@
   {
     "inputs": [
       {
-        "internalType": "address",
+        "internalType": "contract IERC4626",
         "name": "wrappedToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "underlyingToken",
         "type": "address"
       }
     ],
-    "name": "WrongUnderlyingAmount",
+    "name": "WrongUnderlyingToken",
     "type": "error"
   },
   {
@@ -808,31 +910,47 @@
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "wrappedToken",
-        "type": "address"
-      }
-    ],
-    "name": "WrongWrappedAmount",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "WrongWrappedTokenAsset",
-    "type": "error"
-  },
-  {
     "inputs": [],
     "name": "ZeroDivision",
     "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "aggregateSwapFeePercentage",
+        "type": "uint256"
+      }
+    ],
+    "name": "AggregateSwapFeePercentageChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "aggregateYieldFeePercentage",
+        "type": "uint256"
+      }
+    ],
+    "name": "AggregateYieldFeePercentageChanged",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -890,14 +1008,52 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "sharesOwner",
+        "name": "from",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "amountWrapped",
+        "name": "burnedShares",
         "type": "uint256"
+      }
+    ],
+    "name": "BufferSharesBurned",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "contract IERC4626",
+        "name": "wrappedToken",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "issuedShares",
+        "type": "uint256"
+      }
+    ],
+    "name": "BufferSharesMinted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "contract IERC4626",
+        "name": "wrappedToken",
+        "type": "address"
       },
       {
         "indexed": false,
@@ -908,7 +1064,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "issuedShares",
+        "name": "amountWrapped",
         "type": "uint256"
       }
     ],
@@ -925,18 +1081,6 @@
         "type": "address"
       },
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "sharesOwner",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amountWrapped",
-        "type": "uint256"
-      },
-      {
         "indexed": false,
         "internalType": "uint256",
         "name": "amountUnderlying",
@@ -945,7 +1089,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "removedShares",
+        "name": "amountWrapped",
         "type": "uint256"
       }
     ],
@@ -969,9 +1113,21 @@
       },
       {
         "indexed": false,
+        "internalType": "uint256",
+        "name": "totalSupply",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
         "internalType": "int256[]",
         "name": "deltas",
         "type": "int256[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "swapFeeAmountsRaw",
+        "type": "uint256[]"
       }
     ],
     "name": "PoolBalanceChanged",
@@ -1258,12 +1414,6 @@
         "internalType": "uint256",
         "name": "swapFeeAmount",
         "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "contract IERC20",
-        "name": "swapFeeToken",
-        "type": "address"
       }
     ],
     "name": "Swap",
@@ -1360,7 +1510,26 @@
         "type": "bool"
       }
     ],
+    "name": "VaultBuffersPausedStateChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "paused",
+        "type": "bool"
+      }
+    ],
     "name": "VaultPausedStateChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [],
+    "name": "VaultQueriesDisabled",
     "type": "event"
   },
   {
@@ -1487,11 +1656,6 @@
             "internalType": "uint256",
             "name": "limitRaw",
             "type": "uint256"
-          },
-          {
-            "internalType": "bytes",
-            "name": "userData",
-            "type": "bytes"
           }
         ],
         "internalType": "struct BufferWrapOrUnwrapParams",
@@ -1736,8 +1900,8 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct SwapParams",
-        "name": "params",
+        "internalType": "struct VaultSwapParams",
+        "name": "vaultSwapParams",
         "type": "tuple"
       }
     ],

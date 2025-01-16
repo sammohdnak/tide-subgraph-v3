@@ -1,7 +1,9 @@
 {
-  "name": "@subgraphs/vault",
+  "name": "@subgraphs/v3-pools",
   "private": true,
   "scripts": {
+    "add-pool": "node scripts/cli.js",
+    "add-factory": "node scripts/cli.js",
     "codegen": "graph codegen --output-dir src/types/",
     "deploy": "graph deploy",
     "build": "graph build",

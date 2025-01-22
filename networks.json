@@ -52,5 +52,59 @@
       "address": "0xd67F485C07D258B3e93835a3799d862ffcB55923",
       "startBlock": 7216947
     }
+  },
+  "arbitrum-one": {
+    "Vault": {
+      "address": "0xbA1333333333a1BA1108E8412f11850A5C319bA9",
+      "startBlock": 297810187
+    },
+    "ProtocolFeeController": {
+      "address": "0xa731C23D7c95436Baaae9D52782f966E1ed07cc8",
+      "startBlock": 297810187
+    },
+    "WeightedPoolFactory": {
+      "address": "0xD961E30156C2E0D0d925A0De45f931CB7815e970",
+      "startBlock": 297830075
+    },
+    "StablePoolFactory": {
+      "address": "0xEB1eeaBF0126d813589C3D2CfeFFE410D9aE3863",
+      "startBlock": 297829373
+    }
+  },
+  "base": {
+    "Vault": {
+      "address": "0xbA1333333333a1BA1108E8412f11850A5C319bA9",
+      "startBlock": 25343854
+    },
+    "ProtocolFeeController": {
+      "address": "0xa731C23D7c95436Baaae9D52782f966E1ed07cc8",
+      "startBlock": 25343854
+    },
+    "WeightedPoolFactory": {
+      "address": "0x5cF4928a3205728bd12830E1840F7DB85c62a4B9",
+      "startBlock": 25347415
+    },
+    "StablePoolFactory": {
+      "address": "0xb9F8AB3ED3F3aCBa64Bc6cd2DcA74B7F38fD7B88",
+      "startBlock": 25347318
+    }
+  },
+  "sonic": {
+    "Vault": {
+      "address": "0xbA1333333333a1BA1108E8412f11850A5C319bA9",
+      "startBlock": 368135
+    },
+    "ProtocolFeeController": {
+      "address": "0xa731C23D7c95436Baaae9D52782f966E1ed07cc8",
+      "startBlock": 368135
+    },
+    "WeightedPoolFactory": {
+      "address": "0x4726Eb55c37F0353F6d5011B5652d44A87d60fc3",
+      "startBlock": 381432
+    },
+    "StablePoolFactory": {
+      "address": "0x815Ab57a5a2E4976cEC0b43C2D50CF26EF6F31Fd",
+      "startBlock": 381473
+    }
   }
 }

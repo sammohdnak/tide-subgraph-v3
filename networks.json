@@ -1,16 +1,56 @@
 {
-  "sepolia": {
+  "mainnet": {
     "Vault": {
-      "address": "0x68aD967ae8393B722EC69dB1018Ec28AF9A34493",
-      "startBlock": 6924029
+      "address": "0xbA1333333333a1BA1108E8412f11850A5C319bA9",
+      "startBlock": 21332121
+    },
+    "ProtocolFeeController": {
+      "address": "0xa731C23D7c95436Baaae9D52782f966E1ed07cc8",
+      "startBlock": 21332121
     },
     "WeightedPoolFactory": {
-      "address": "0x4F12F60148F98aD920b99e844807F0e245f2AE58",
-      "startBlock": 6924094
+      "address": "0x201efd508c8DfE9DE1a13c2452863A78CB2a86Cc",
+      "startBlock": 21336937
     },
     "StablePoolFactory": {
-      "address": "0xD895059a81711e4955823ED2C0755F204A86E5DA",
-      "startBlock": 6924116
+      "address": "0xB9d01CA61b9C181dA1051bFDd28e1097e920AB14",
+      "startBlock": 21337005
+    }
+  },
+  "gnosis": {
+    "Vault": {
+      "address": "0xbA1333333333a1BA1108E8412f11850A5C319bA9",
+      "startBlock": 37360338
+    },
+    "ProtocolFeeController": {
+      "address": "0xa731C23D7c95436Baaae9D52782f966E1ed07cc8",
+      "startBlock": 37360338
+    },
+    "WeightedPoolFactory": {
+      "address": "0xEB1eeaBF0126d813589C3D2CfeFFE410D9aE3863",
+      "startBlock": 37371691
+    },
+    "StablePoolFactory": {
+      "address": "0x22625eEDd92c81a219A83e1dc48f88d54786B017",
+      "startBlock": 37371860
+    }
+  },
+  "sepolia": {
+    "Vault": {
+      "address": "0xbA1333333333a1BA1108E8412f11850A5C319bA9",
+      "startBlock": 7212247
+    },
+    "ProtocolFeeController": {
+      "address": "0xa731C23D7c95436Baaae9D52782f966E1ed07cc8",
+      "startBlock": 7212247
+    },
+    "WeightedPoolFactory": {
+      "address": "0x7532d5a3bE916e4a4D900240F49F0BABd4FD855C",
+      "startBlock": 7216947
+    },
+    "StablePoolFactory": {
+      "address": "0xd67F485C07D258B3e93835a3799d862ffcB55923",
+      "startBlock": 7217020
     }
   }
 }

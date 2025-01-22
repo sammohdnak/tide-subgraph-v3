@@ -23,6 +23,15 @@ jobs:
     secrets:
       GRAPH_DEPLOY_KEY: ${{ secrets.GRAPH_DEPLOY_KEY }}
 
+  deploy-sepolia:
+    uses: ./.github/workflows/deploy-subgraph.yml
+    with:
+      working-directory: subgraphs/v3-pools
+      subgraph-name: balancer-pools-v3-sepolia
+      manifest-file: subgraph.sepolia.yaml
+    secrets:
+      GRAPH_DEPLOY_KEY: ${{ secrets.GRAPH_DEPLOY_KEY }}
+
   deploy-arbitrum:
     uses: ./.github/workflows/deploy-subgraph.yml
     with:

@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: Vault
-    network: mainnet
+    network: {{ network }}
     source:
       abi: Vault
-      address: "0xbA1333333333a1BA1108E8412f11850A5C319bA9"
-      startBlock: 21332121
+      address: "{{ Vault.address }}"
+      startBlock: {{ Vault.startBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -48,11 +48,11 @@ dataSources:
 
   - kind: ethereum
     name: ProtocolFeeController
-    network: mainnet
+    network: {{ network }}
     source:
       abi: ProtocolFeeController
-      address: "0xa731C23D7c95436Baaae9D52782f966E1ed07cc8"
-      startBlock: 21332121
+      address: "{{ ProtocolFeeController.address }}"
+      startBlock: {{ ProtocolFeeController.startBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -87,7 +87,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: BPT
-    network: mainnet
+    network: {{ network }}
     source:
       abi: BPT
     mapping:

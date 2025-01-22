@@ -21,6 +21,8 @@ jobs:
           version: 8
       - name: Install dependencies
         run: pnpm install
+      - name: Generate manifests
+        run: pnpm generate-manifests
       - name: Graph Codegen
         working-directory: subgraphs/v3-vault
         run: pnpm codegen subgraph.yaml
@@ -51,6 +53,8 @@ jobs:
           version: 8
       - name: Install dependencies
         run: pnpm install
+      - name: Generate manifests
+        run: pnpm generate-manifests
       - name: Graph Codegen
         working-directory: subgraphs/v3-vault
         run: pnpm codegen subgraph.gnosis.yaml

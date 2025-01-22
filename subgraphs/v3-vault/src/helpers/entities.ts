@@ -10,7 +10,7 @@ import {
   Vault,
 } from "../types/schema";
 import { PoolShare } from "../types/schema";
-import { ONE_BD, ZERO_ADDRESS, ZERO_BD } from "./constants";
+import { ONE_BD, VAULT_ADDRESS, ZERO_ADDRESS, ZERO_BD } from "./constants";
 import { PoolRegisteredTokenConfigStruct } from "../types/Vault/Vault";
 import { ERC20 } from "../types/Vault/ERC20";
 import { VaultExtension } from "../types/Vault/VaultExtension";
@@ -18,14 +18,14 @@ import { scaleDown } from "./misc";
 
 const DAY = 24 * 60 * 60;
 
-export function getVault(vaultAddress: Bytes): Vault {
-  let vault: Vault | null = Vault.load(vaultAddress);
+export function getVault(): Vault {
+  let vault: Vault | null = Vault.load(VAULT_ADDRESS);
   if (vault != null) return vault;
 
-  let vaultContract = VaultExtension.bind(changetype<Address>(vaultAddress));
+  let vaultContract = VaultExtension.bind(changetype<Address>(VAULT_ADDRESS));
   let protocolFeeControllerCall = vaultContract.try_getProtocolFeeController();
 
-  vault = new Vault(vaultAddress);
+  vault = new Vault(VAULT_ADDRESS);
   vault.isPaused = false;
   vault.authorizer = ZERO_ADDRESS;
   vault.protocolSwapFee = ZERO_BD;
@@ -131,6 +131,9 @@ export function createPoolToken(
   poolToken.totalSwapFee = ZERO_BD;
   poolToken.totalProtocolSwapFee = ZERO_BD;
   poolToken.totalProtocolYieldFee = ZERO_BD;
+  poolToken.controllerProtocolFeeBalance = ZERO_BD;
+  poolToken.vaultProtocolSwapFeeBalance = ZERO_BD;
+  poolToken.vaultProtocolYieldFeeBalance = ZERO_BD;
   poolToken.buffer = buffer ? buffer.id : null;
   poolToken.nestedPool = nestedPool ? nestedPool.id : null;
   poolToken.paysYieldFees = tokenConfig.paysYieldFees;
@@ -217,35 +220,31 @@ export function createPoolShare(
   return poolShare;
 }
 
-export function updateProtocolFeeAmounts(pool: Pool): void {
-  let poolAddress = changetype<Address>(pool.address);
-  let vaultAddress = changetype<Address>(pool.vault);
-  let vault = VaultExtension.bind(vaultAddress);
+export function updateProtocolYieldFeeAmounts(pool: Pool): void {
+  let vault = VaultExtension.bind(changetype<Address>(pool.vault));
 
   let poolTokens = pool.tokens.load();
   for (let i = 0; i < poolTokens.length; i++) {
     let poolToken = poolTokens[i];
-    let poolTokenAddress = changetype<Address>(poolToken.address);
 
-    let swapFeeAmount = vault.try_getAggregateSwapFeeAmount(
-      poolAddress,
-      poolTokenAddress
-    );
-    let yieldFeeAmount = vault.try_getAggregateYieldFeeAmount(
-      poolAddress,
-      poolTokenAddress
+    if (!poolToken.paysYieldFees) continue;
+
+    let aggregateYieldFee = vault.try_getAggregateYieldFeeAmount(
+      changetype<Address>(pool.address),
+      changetype<Address>(poolToken.address)
     );
 
-    if (!swapFeeAmount.reverted) {
-      poolToken.totalProtocolSwapFee = poolToken.totalProtocolSwapFee.plus(
-        scaleDown(swapFeeAmount.value, poolToken.decimals)
-      );
-    }
+    if (aggregateYieldFee.reverted) continue;
 
-    if (!yieldFeeAmount.reverted) {
-      poolToken.totalProtocolYieldFee = poolToken.totalProtocolYieldFee.plus(
-        scaleDown(yieldFeeAmount.value, poolToken.decimals)
-      );
-    }
+    let yieldFeeAmount = scaleDown(aggregateYieldFee.value, poolToken.decimals);
+    let deltaYieldFee = yieldFeeAmount.minus(
+      poolToken.vaultProtocolYieldFeeBalance
+    );
+    poolToken.vaultProtocolYieldFeeBalance = yieldFeeAmount;
+
+    poolToken.totalProtocolYieldFee =
+      poolToken.totalProtocolYieldFee.plus(deltaYieldFee);
+
+    poolToken.save();
   }
 }

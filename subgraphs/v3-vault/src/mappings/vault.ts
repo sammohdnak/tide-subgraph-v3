@@ -29,21 +29,22 @@ import {
   getToken,
   getVault,
   loadPoolToken,
-  updateProtocolFeeAmounts,
+  updateProtocolYieldFeeAmounts,
 } from "../helpers/entities";
 import { ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../helpers/constants";
-import { hexToBigInt, scaleDown } from "../helpers/misc";
+import { hexToBigInt, scaleDown, scaleUp } from "../helpers/misc";
 import { BPT } from "../types/templates";
 import { ERC20 } from "../types/Vault/ERC20";
 import { VaultExtension } from "../types/Vault/VaultExtension";
 import { ERC4626 } from "../types/Vault/ERC4626";
+import { computeAggregateSwapFee } from "../helpers/math";
 
 /************************************
  ******* POOLS REGISTRATIONS ********
  ************************************/
 
 export function handlePoolRegistered(event: PoolRegistered): void {
-  let vault = getVault(event.address);
+  let vault = getVault();
   let poolAddress = event.params.pool;
 
   let pool = new Pool(poolAddress);
@@ -55,8 +56,8 @@ export function handlePoolRegistered(event: PoolRegistered): void {
   pool.isInitialized = false;
   pool.swapsCount = ZERO_BI;
   pool.holdersCount = ZERO_BI;
-  pool.protocolSwapFee = ZERO_BD;
-  pool.protocolYieldFee = ZERO_BD;
+  pool.protocolSwapFee = vault.protocolSwapFee;
+  pool.protocolYieldFee = vault.protocolYieldFee;
   pool.poolCreatorSwapFee = ZERO_BD;
   pool.poolCreatorYieldFee = ZERO_BD;
 
@@ -148,7 +149,7 @@ export function handlePoolRegistered(event: PoolRegistered): void {
 
 export function handleLiquidityAdded(event: LiquidityAdded): void {
   let poolAddress = event.params.pool;
-  let amounts: BigInt[] = event.params.amountsAddedRaw;
+  let amountsAddedRaw = event.params.amountsAddedRaw;
 
   let transactionHash = event.transaction.hash;
   let logIndex = event.logIndex;
@@ -169,7 +170,7 @@ export function handleLiquidityAdded(event: LiquidityAdded): void {
   let join = new AddRemove(joinId);
 
   let poolTokens = pool.tokens.load();
-  let joinAmounts = new Array<BigDecimal>(amounts.length);
+  let joinAmounts = new Array<BigDecimal>(amountsAddedRaw.length);
 
   for (let i: i32 = 0; i < poolTokens.length; i++) {
     let poolToken = poolTokens[i];
@@ -177,8 +178,23 @@ export function handleLiquidityAdded(event: LiquidityAdded): void {
       event.params.amountsAddedRaw[i],
       poolToken.decimals
     );
-    joinAmounts[i] = joinAmount;
     poolToken.balance = poolToken.balance.plus(joinAmount);
+    joinAmounts[i] = joinAmount;
+
+    let aggregateSwapFeeAmount = scaleDown(
+      computeAggregateSwapFee(
+        event.params.swapFeeAmountsRaw[i],
+        pool.protocolSwapFee
+      ),
+      poolToken.decimals
+    );
+
+    poolToken.vaultProtocolSwapFeeBalance =
+      poolToken.vaultProtocolSwapFeeBalance.plus(aggregateSwapFeeAmount);
+    poolToken.totalProtocolSwapFee = poolToken.totalProtocolSwapFee.plus(
+      aggregateSwapFeeAmount
+    );
+
     poolToken.save();
   }
 
@@ -193,6 +209,7 @@ export function handleLiquidityAdded(event: LiquidityAdded): void {
   join.transactionHash = transactionHash;
   join.save();
 
+  updateProtocolYieldFeeAmounts(pool);
   createPoolSnapshot(pool, event.block.timestamp.toI32());
 }
 
@@ -224,8 +241,23 @@ export function handleLiquidityRemoved(event: LiquidityRemoved): void {
       event.params.amountsRemovedRaw[i],
       poolToken.decimals
     );
-    exitAmounts[i] = exitAmount;
     poolToken.balance = poolToken.balance.minus(exitAmount);
+    exitAmounts[i] = exitAmount;
+
+    let aggregateSwapFeeAmount = scaleDown(
+      computeAggregateSwapFee(
+        event.params.swapFeeAmountsRaw[i],
+        pool.protocolSwapFee
+      ),
+      poolToken.decimals
+    );
+
+    poolToken.vaultProtocolSwapFeeBalance =
+      poolToken.vaultProtocolSwapFeeBalance.plus(aggregateSwapFeeAmount);
+    poolToken.totalProtocolSwapFee = poolToken.totalProtocolSwapFee.plus(
+      aggregateSwapFeeAmount
+    );
+
     poolToken.save();
   }
 
@@ -240,6 +272,7 @@ export function handleLiquidityRemoved(event: LiquidityRemoved): void {
   exit.transactionHash = transactionHash;
   exit.save();
 
+  updateProtocolYieldFeeAmounts(pool);
   createPoolSnapshot(pool, event.block.timestamp.toI32());
 }
 
@@ -279,7 +312,6 @@ export function handleSwap(event: SwapEvent): void {
   swap.blockNumber = event.block.number;
   swap.blockTimestamp = event.block.timestamp;
   swap.transactionHash = event.transaction.hash;
-
   swap.save();
 
   let poolAddress = event.params.pool;
@@ -309,10 +341,20 @@ export function handleSwap(event: SwapEvent): void {
     return;
   }
 
+  let aggregateSwapFeeAmount = scaleDown(
+    computeAggregateSwapFee(event.params.swapFeeAmount, pool.protocolSwapFee),
+    poolTokenIn.decimals
+  );
+
   let newInAmount = poolTokenIn.balance.plus(tokenAmountIn);
   poolTokenIn.balance = newInAmount;
   poolTokenIn.volume = poolTokenIn.volume.plus(tokenAmountIn);
   poolTokenIn.totalSwapFee = poolTokenIn.totalSwapFee.plus(swapFeeAmount);
+  poolTokenIn.vaultProtocolSwapFeeBalance =
+    poolTokenIn.vaultProtocolSwapFeeBalance.plus(aggregateSwapFeeAmount);
+  poolTokenIn.totalProtocolSwapFee = poolTokenIn.totalProtocolSwapFee.plus(
+    aggregateSwapFeeAmount
+  );
   poolTokenIn.save();
 
   let newOutAmount = poolTokenOut.balance.minus(tokenAmountOut);
@@ -320,7 +362,7 @@ export function handleSwap(event: SwapEvent): void {
   poolTokenOut.volume = poolTokenOut.volume.plus(tokenAmountOut);
   poolTokenOut.save();
 
-  updateProtocolFeeAmounts(pool);
+  updateProtocolYieldFeeAmounts(pool);
   createPoolSnapshot(pool, event.block.timestamp.toI32());
 }
 

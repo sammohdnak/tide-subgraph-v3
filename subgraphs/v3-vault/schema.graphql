@@ -167,6 +167,12 @@ type PoolToken @entity {
   totalProtocolYieldFee: BigDecimal!
   "Indicates whether this token pays yield fees"
   paysYieldFees: Boolean!
+  "Protocol fees available for withdrawal from the Controlller"
+  controllerProtocolFeeBalance: BigDecimal!
+  "Protocol swap fees pending collection in the Vault"
+  vaultProtocolSwapFeeBalance: BigDecimal!
+  "Protocol yield fees pending collection in the Vault"
+  vaultProtocolYieldFeeBalance: BigDecimal!
 }
 
 type Token @entity {

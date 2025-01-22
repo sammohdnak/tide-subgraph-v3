@@ -23,11 +23,29 @@ jobs:
     secrets:
       GRAPH_DEPLOY_KEY: ${{ secrets.GRAPH_DEPLOY_KEY }}
 
-  deploy-sepolia:
+  deploy-arbitrum:
     uses: ./.github/workflows/deploy-subgraph.yml
     with:
       working-directory: subgraphs/v3-pools
-      subgraph-name: balancer-pools-v3-sepolia
-      manifest-file: subgraph.sepolia.yaml
+      subgraph-name: balancer-pools-v3-arbitrum
+      manifest-file: subgraph.arbitrum-one.yaml
     secrets:
       GRAPH_DEPLOY_KEY: ${{ secrets.GRAPH_DEPLOY_KEY }}
+
+  deploy-base:
+    uses: ./.github/workflows/deploy-subgraph.yml
+    with:
+      working-directory: subgraphs/v3-pools
+      subgraph-name: balancer-pools-v3-base
+      manifest-file: subgraph.base.yaml
+    secrets:
+      GRAPH_DEPLOY_KEY: ${{ secrets.GRAPH_DEPLOY_KEY }}
+
+  deploy-sonic:
+    uses: ./.github/workflows/deploy-subgraph.yml
+    with:
+      working-directory: subgraphs/v3-pools
+      subgraph-name: balancer-v3-pools-sonic
+      manifest-file: subgraph.sonic.yaml
+    secrets:
+      GRAPH_DEPLOY_KEY: ${{ secrets.BEETS_DEPLOY_KEY }}

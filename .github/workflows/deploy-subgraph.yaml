@@ -1,0 +1,49 @@
+name: Deploy Subgraph
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        required: true
+        type: string
+      subgraph-name:
+        required: true
+        type: string
+      manifest-file:
+        required: true
+        type: string
+    secrets:
+      GRAPH_DEPLOY_KEY:
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: graph
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - name: Install dependencies
+        run: pnpm install
+      - name: Generate manifests
+        run: pnpm generate-manifests
+      - name: Graph Codegen
+        working-directory: ${{ inputs.working-directory }}
+        run: pnpm codegen ${{ inputs.manifest-file }}
+      - name: Graph Build
+        working-directory: ${{ inputs.working-directory }}
+        run: pnpm build ${{ inputs.manifest-file }}
+      - name: Graph Deploy
+        working-directory: ${{ inputs.working-directory }}
+        run: >
+          pnpm graph deploy
+          --deploy-key ${{secrets.GRAPH_DEPLOY_KEY}}
+          ${{ inputs.subgraph-name }}
+          ${{ inputs.manifest-file }}
+          --version-label ${GITHUB_SHA::8}

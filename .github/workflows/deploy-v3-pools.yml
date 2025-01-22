@@ -1,0 +1,33 @@
+name: Deploy v3 Pools Subgraphs
+on:
+  push:
+    branches: main
+    paths:
+      - "subgraphs/v3-pools/**"
+jobs:
+  deploy-mainnet:
+    uses: ./.github/workflows/deploy-subgraph.yml
+    with:
+      working-directory: subgraphs/v3-pools
+      subgraph-name: balancer-pools-v3
+      manifest-file: subgraph.yaml
+    secrets:
+      GRAPH_DEPLOY_KEY: ${{ secrets.GRAPH_DEPLOY_KEY }}
+  
+  deploy-gnosis:
+    uses: ./.github/workflows/deploy-subgraph.yml
+    with:
+      working-directory: subgraphs/v3-pools
+      subgraph-name: balancer-pools-v3-gnosis
+      manifest-file: subgraph.gnosis.yaml
+    secrets:
+      GRAPH_DEPLOY_KEY: ${{ secrets.GRAPH_DEPLOY_KEY }}
+
+  deploy-sepolia:
+    uses: ./.github/workflows/deploy-subgraph.yml
+    with:
+      working-directory: subgraphs/v3-pools
+      subgraph-name: balancer-pools-v3-sepolia
+      manifest-file: subgraph.sepolia.yaml
+    secrets:
+      GRAPH_DEPLOY_KEY: ${{ secrets.GRAPH_DEPLOY_KEY }}

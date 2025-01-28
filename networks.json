@@ -51,6 +51,14 @@
     "StablePoolFactory": {
       "address": "0xd67F485C07D258B3e93835a3799d862ffcB55923",
       "startBlock": 7216947
+    },
+    "Gyro2CLPPoolFactory": {
+      "address": "0x97701aa7c9ae4497874C54B1C779221d6F1081C9",
+      "startBlock": 7563127
+    },
+    "GyroECLPPoolFactory": {
+      "address": "0xaC06eD505b0d85e46Bf90590f835A12E5EAac86E",
+      "startBlock": 7563132
     }
   },
   "arbitrum-one": {

@@ -1,10 +1,16 @@
 const fs = require('fs');
 const path = require('path');
-const yaml = require('js-yaml');
 
 const networksData = JSON.parse(fs.readFileSync('networks.json', 'utf8'));
 
 function replacePlaceholders(template, network, networkData) {
+  template = template.replace(/{{#if ([^}]+)}}([\s\S]*?){{\/if}}/g, (match, factoryName, content) => {
+    if (networkData[factoryName]) {
+      return content;
+    }
+    return '';
+  });
+
   let result = template.replace(/{{ network }}/g, network);
   
   for (const [contractName, contractData] of Object.entries(networkData)) {
@@ -12,7 +18,12 @@ function replacePlaceholders(template, network, networkData) {
     result = result.replace(new RegExp(`{{ ${contractName}\\.startBlock }}`, 'g'), contractData.startBlock.toString());
   }
   
-  return result;
+  result = result
+    .split('\n')
+    .filter(line => line.trim() !== '')
+    .join('\n');
+
+  return result + '\n';
 }
 
 ['v3-pools', 'v3-vault'].forEach(subgraph => {
@@ -24,7 +35,6 @@ function replacePlaceholders(template, network, networkData) {
   }
   
   const template = fs.readFileSync(templatePath, 'utf8');
-
   Object.entries(networksData).forEach(([network, networkData]) => {
     const config = replacePlaceholders(template, network, networkData);
     const outputPath = path.join('subgraphs', subgraph, `subgraph${network === 'mainnet' ? '' : `.${network}`}.yaml`);

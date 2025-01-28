@@ -45,7 +45,6 @@ dataSources:
         - event: Unwrap(indexed address,uint256,uint256,bytes32)
           handler: handleUnwrap
       file: ./src/mappings/vault.ts
-
   - kind: ethereum
     name: ProtocolFeeController
     network: arbitrum-one
@@ -83,7 +82,6 @@ dataSources:
         - event: ProtocolFeesWithdrawn(indexed address,indexed address,indexed address,uint256)
           handler: handleProtocolFeesWithdrawn
       file: ./src/mappings/controller.ts
-
 templates:
   - kind: ethereum/contract
     name: BPT

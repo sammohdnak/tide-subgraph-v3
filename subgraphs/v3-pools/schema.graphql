@@ -1,6 +1,8 @@
 enum PoolType {
   Weighted
   Stable
+  Gyro2
+  GyroE
 }
 
 type Factory @entity {
@@ -30,6 +32,32 @@ type StableParams @entity {
   amp: BigInt!
 }
 
+type Gyro2Params @entity {
+  "Unique identifier for the Gyro2Params"
+  id: Bytes!
+  sqrtAlpha: BigDecimal!
+  sqrtBeta: BigDecimal!
+}
+
+type GyroEParams @entity {
+  "Unique identifier for the GyroEParams"
+  id: Bytes!
+  alpha: BigDecimal!
+  beta: BigDecimal!
+  c: BigDecimal
+  s: BigDecimal
+  lambda: BigDecimal!
+  tauAlphaX: BigDecimal
+  tauAlphaY: BigDecimal
+  tauBetaX: BigDecimal
+  tauBetaY: BigDecimal
+  u: BigDecimal
+  v: BigDecimal
+  w: BigDecimal
+  z: BigDecimal
+  dSq: BigDecimal
+}
+
 type Pool @entity {
   "Unique identifier for the Pool"
   id: Bytes!
@@ -41,4 +69,8 @@ type Pool @entity {
   weightedParams: WeightedParams
   "Parameters for Stable pools (null for other pool types)"
   stableParams: StableParams
+  "Parameters for Gyro2 pools (null for other pool types)"
+  gyro2Params: Gyro2Params
+  "Parameters for GyroE pools (null for other pool types)"
+  gyroEParams: GyroEParams
 }

@@ -2,6 +2,7 @@ specVersion: 1.0.0
 schema:
   file: ./schema.graphql
 dataSources:
+  {{#if WeightedPoolFactory}}
   - kind: ethereum
     name: WeightedPoolFactory
     network: {{ network }}
@@ -25,6 +26,8 @@ dataSources:
         - event: PoolCreated(indexed address)
           handler: handleWeightedPoolCreated
       file: ./src/mappings/weighted.ts
+  {{/if}}
+  {{#if StablePoolFactory}}
   - kind: ethereum
     name: StablePoolFactory
     network: {{ network }}
@@ -48,3 +51,54 @@ dataSources:
         - event: PoolCreated(indexed address)
           handler: handleStablePoolCreated
       file: ./src/mappings/stable.ts
+  {{/if}}
+  {{#if Gyro2CLPPoolFactory}}
+  - kind: ethereum
+    name: Gyro2CLPPoolFactory
+    network: {{ network }}
+    source:
+      abi: BasePoolFactory
+      address: "{{ Gyro2CLPPoolFactory.address }}"
+      startBlock: {{ Gyro2CLPPoolFactory.startBlock }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Factory
+        - Pool
+      abis:
+        - name: Gyro2CLPPool
+          file: ./abis/Gyro2CLPPool.json
+        - name: BasePoolFactory
+          file: ./abis/BasePoolFactory.json
+      eventHandlers:
+        - event: PoolCreated(indexed address)
+          handler: handleGyro2PoolCreated
+      file: ./src/mappings/gyro2.ts
+  {{/if}}
+  {{#if GyroECLPPoolFactory}}
+  - kind: ethereum
+    name: GyroECLPPoolFactory
+    network: {{ network }}
+    source:
+      abi: BasePoolFactory
+      address: "{{ GyroECLPPoolFactory.address }}"
+      startBlock: {{ GyroECLPPoolFactory.startBlock }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Factory
+        - Pool
+      abis:
+        - name: GyroECLPPool
+          file: ./abis/GyroECLPPool.json
+        - name: BasePoolFactory
+          file: ./abis/BasePoolFactory.json
+      eventHandlers:
+        - event: PoolCreated(indexed address)
+          handler: handleGyroEPoolCreated
+      file: ./src/mappings/gyroE.ts
+  {{/if}}

@@ -59,6 +59,10 @@
     "GyroECLPPoolFactory": {
       "address": "0xaC06eD505b0d85e46Bf90590f835A12E5EAac86E",
       "startBlock": 7563132
+    },
+    "StableSurgeHook": {
+      "address": "0xC0cbcdD6b823A4f22aA6BbDDe44C17e754266AEF",
+      "startBlock": 7549387
     }
   },
   "arbitrum-one": {

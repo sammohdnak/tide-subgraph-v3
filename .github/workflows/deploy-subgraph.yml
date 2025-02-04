@@ -59,7 +59,7 @@ jobs:
         id: graph-build
         working-directory: ${{ inputs.working-directory }}
         run: pnpm build ${{ inputs.manifest-file }}
-
+      
       - name: Graph Deploy
         id: graph-deploy
         working-directory: ${{ inputs.working-directory }}
@@ -68,7 +68,7 @@ jobs:
             --deploy-key ${{ secrets.GRAPH_DEPLOY_KEY }} \
             ${{ inputs.subgraph-name }} \
             ${{ inputs.manifest-file }} \
-            --version-label ${GITHUB_SHA::8} | tee deployment.log
+            --version-label ${GITHUB_SHA::8} > deployment.log 2>&1
 
       - name: Deployment ID
         id: extract-id

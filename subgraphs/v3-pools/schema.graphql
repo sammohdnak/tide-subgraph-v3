@@ -1,6 +1,7 @@
 enum PoolType {
   Weighted
   Stable
+  StableSurge
   Gyro2
   GyroE
 }

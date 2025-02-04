@@ -58,3 +58,31 @@ jobs:
       manifest-file: subgraph.sonic.yaml
     secrets:
       GRAPH_DEPLOY_KEY: ${{ secrets.BEETS_DEPLOY_KEY }}
+
+  generate-report:
+    needs: [deploy-mainnet, deploy-gnosis, deploy-sepolia, deploy-arbitrum, deploy-base, deploy-sonic]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Deployment Report
+        run: |
+          echo "# Subgraph Deployment Report" > deployment_report.md
+          echo "Generated at: $(date)" >> deployment_report.md
+          echo "" >> deployment_report.md
+          echo "## Deployment IDs" >> deployment_report.md
+          
+          # Add each network's deployment details
+          echo "- Mainnet: ${{ needs.deploy-mainnet.outputs.deployment_id }}" >> deployment_report.md
+          echo "- Gnosis: ${{ needs.deploy-gnosis.outputs.deployment_id }}" >> deployment_report.md
+          echo "- Sepolia: ${{ needs.deploy-sepolia.outputs.deployment_id }}" >> deployment_report.md
+          echo "- Arbitrum: ${{ needs.deploy-arbitrum.outputs.deployment_id }}" >> deployment_report.md
+          echo "- Base: ${{ needs.deploy-base.outputs.deployment_id }}" >> deployment_report.md
+          echo "- Sonic: ${{ needs.deploy-sonic.outputs.deployment_id }}" >> deployment_report.md
+          
+          echo "" >> deployment_report.md
+          echo "Commit: ${GITHUB_SHA}" >> deployment_report.md
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-report
+          path: deployment_report.md

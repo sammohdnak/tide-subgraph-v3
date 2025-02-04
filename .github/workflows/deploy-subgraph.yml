@@ -1,4 +1,5 @@
 name: Deploy Subgraph
+
 on:
   workflow_call:
     inputs:
@@ -14,36 +15,64 @@ on:
     secrets:
       GRAPH_DEPLOY_KEY:
         required: true
+    outputs:
+      deployment_id:
+        value: ${{ jobs.deploy.outputs.deployment_id }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: graph
+    outputs:
+      deployment_id: ${{ steps.extract-id.outputs.deployment_id }}
+    
     steps:
-      - uses: actions/checkout@v3
+      - id: checkout
+        uses: actions/checkout@v3
+
       - name: Install node
+        id: setup-node
         uses: actions/setup-node@v3
         with:
           node-version: 18
+
       - name: Install pnpm
+        id: setup-pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
+
       - name: Install dependencies
+        id: pnpm-install
         run: pnpm install
+
       - name: Generate manifests
+        id: generate-manifests
         run: pnpm generate-manifests
+
       - name: Graph Codegen
+        id: graph-codegen
         working-directory: ${{ inputs.working-directory }}
         run: pnpm codegen ${{ inputs.manifest-file }}
+
       - name: Graph Build
+        id: graph-build
         working-directory: ${{ inputs.working-directory }}
         run: pnpm build ${{ inputs.manifest-file }}
+
       - name: Graph Deploy
+        id: graph-deploy
         working-directory: ${{ inputs.working-directory }}
-        run: >
-          pnpm graph deploy
-          --deploy-key ${{secrets.GRAPH_DEPLOY_KEY}}
-          ${{ inputs.subgraph-name }}
-          ${{ inputs.manifest-file }}
-          --version-label ${GITHUB_SHA::8}
+        run: |
+          pnpm graph deploy \
+            --deploy-key ${{ secrets.GRAPH_DEPLOY_KEY }} \
+            ${{ inputs.subgraph-name }} \
+            ${{ inputs.manifest-file }} \
+            --version-label ${GITHUB_SHA::8} | tee deployment.log
+
+      - name: Deployment ID
+        id: extract-id
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          DEPLOY_ID=$(grep "Build completed:" deployment.log | awk '{print $3}')
+          echo "deployment_id=${DEPLOY_ID}" >> $GITHUB_OUTPUT

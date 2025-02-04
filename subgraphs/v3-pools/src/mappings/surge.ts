@@ -1,0 +1,55 @@
+import { Address, Bytes } from "@graphprotocol/graph-ts";
+
+import { handlePoolHookCreated, PoolType } from "./common";
+import { StablePool } from "../types/StablePoolFactory/StablePool";
+import { StableSurgeParams } from "../types/schema";
+import {
+  StableSurgeHook,
+  StableSurgeHookRegistered,
+} from "../types/StableSurgeHook/StableSurgeHook";
+import { scaleDown } from "../helpers/math";
+
+function handleStableSurgeParams(
+  poolAddress: Address,
+  hookAddress: Address
+): Bytes {
+  let stablePool = StablePool.bind(poolAddress);
+  let surgeParams = new StableSurgeParams(poolAddress);
+
+  let ampResult = stablePool.try_getAmplificationParameter();
+  if (!ampResult.reverted) {
+    let ampValue = ampResult.value.value0;
+    let ampPrecision = ampResult.value.value2;
+    surgeParams.amp = ampValue.div(ampPrecision);
+  }
+
+  let stableSurge = StableSurgeHook.bind(hookAddress);
+
+  let maxSurgeFee = stableSurge.try_getMaxSurgeFeePercentage(poolAddress);
+  if (!maxSurgeFee.reverted) {
+    surgeParams.maxSurgeFeePercentage = scaleDown(maxSurgeFee.value, 18);
+  }
+
+  let surgeThreshold = stableSurge.try_getSurgeThresholdPercentage(poolAddress);
+  if (!surgeThreshold.reverted) {
+    surgeParams.surgeThresholdPercentage = scaleDown(surgeThreshold.value, 18);
+  }
+
+  surgeParams.save();
+
+  return surgeParams.id;
+}
+
+export function handleStableSurgeHookRegistered(
+  event: StableSurgeHookRegistered
+): void {
+  handlePoolHookCreated(
+    event.params.pool,
+    event.params.factory, // Factory
+    event.address, // Hook
+    PoolType.StableSurge,
+    1,
+    handleStableSurgeParams,
+    "stableSurgeParams"
+  );
+}

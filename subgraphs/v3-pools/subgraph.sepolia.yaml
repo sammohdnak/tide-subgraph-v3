@@ -94,3 +94,26 @@ dataSources:
         - event: PoolCreated(indexed address)
           handler: handleGyroEPoolCreated
       file: ./src/mappings/gyroE.ts
+  - kind: ethereum
+    name: StableSurgeHook
+    network: sepolia
+    source:
+      abi: StableSurgeHook
+      address: "0xC0cbcdD6b823A4f22aA6BbDDe44C17e754266AEF"
+      startBlock: 7549387
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Factory
+        - Pool
+      abis:
+        - name: StablePool
+          file: ./abis/StablePool.json
+        - name: StableSurgeHook
+          file: ./abis/StableSurgeHook.json
+      eventHandlers:
+        - event: StableSurgeHookRegistered(indexed address,indexed address)
+          handler: handleStableSurgeHookRegistered
+      file: ./src/mappings/surge.ts

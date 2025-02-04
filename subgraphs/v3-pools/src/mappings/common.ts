@@ -6,6 +6,7 @@ import { Pool } from "../types/schema";
 export namespace PoolType {
   export const Weighted = "Weighted";
   export const Stable = "Stable";
+  export const StableSurge = "StableSurge";
   export const Gyro2 = "Gyro2";
   export const GyroE = "GyroE";
 }
@@ -28,11 +29,26 @@ export function handlePoolCreated(
   factoryAddress: Address,
   poolType: string,
   version: i32,
-  paramHandler: (address: Address) => Bytes,
+  paramHandler: (poolAddress: Address) => Bytes,
   paramField: string
 ): void {
   let pool = createBasePool(poolAddress, factoryAddress, poolType, version);
   let params = paramHandler(poolAddress);
+  pool.set(paramField, Value.fromBytes(params));
+  pool.save();
+}
+
+export function handlePoolHookCreated(
+  poolAddress: Address,
+  factoryAddress: Address,
+  hookAddress: Address,
+  poolType: string,
+  version: i32,
+  paramHandler: (poolAddress: Address, hookAddress: Address) => Bytes,
+  paramField: string
+): void {
+  let pool = createBasePool(poolAddress, factoryAddress, poolType, version);
+  let params = paramHandler(poolAddress, hookAddress);
   pool.set(paramField, Value.fromBytes(params));
   pool.save();
 }

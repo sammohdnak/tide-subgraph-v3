@@ -32,6 +32,18 @@ type StableParams @entity {
   amp: BigInt!
 }
 
+type StableSurgeParams @entity {
+  "Unique identifier for the StablePoolParams"
+  id: Bytes!
+  "Amplification parameter for Stable Pools"
+  amp: BigInt!
+  "Maximum surge fee percentage"
+  maxSurgeFeePercentage: BigDecimal!
+  "Surge threshold percentage"
+  surgeThresholdPercentage: BigDecimal!
+}
+
+
 type Gyro2Params @entity {
   "Unique identifier for the Gyro2Params"
   id: Bytes!
@@ -69,6 +81,8 @@ type Pool @entity {
   weightedParams: WeightedParams
   "Parameters for Stable pools (null for other pool types)"
   stableParams: StableParams
+  "Parameters for StableSurge pools (null for other pool types)"
+  stableSurgeParams: StableParams
   "Parameters for Gyro2 pools (null for other pool types)"
   gyro2Params: Gyro2Params
   "Parameters for GyroE pools (null for other pool types)"

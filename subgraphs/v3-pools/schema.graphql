@@ -33,9 +33,9 @@ type StableParams @entity {
 }
 
 type StableSurgeParams @entity {
-  "Unique identifier for the StablePoolParams"
+  "Unique identifier for the StableSurgeParams"
   id: Bytes!
-  "Amplification parameter for Stable Pools"
+  "Amplification parameter"
   amp: BigInt!
   "Maximum surge fee percentage"
   maxSurgeFeePercentage: BigDecimal!

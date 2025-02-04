@@ -50,6 +50,6 @@ export function handleStableSurgeHookRegistered(
     PoolType.StableSurge,
     1,
     handleStableSurgeParams,
-    "stableParams"
+    "stableSurgeParams"
   );
 }

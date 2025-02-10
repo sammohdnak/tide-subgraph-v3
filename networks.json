@@ -15,6 +15,10 @@
     "StablePoolFactory": {
       "address": "0xB9d01CA61b9C181dA1051bFDd28e1097e920AB14",
       "startBlock": 21337005
+    },
+    "StableSurgeHook": {
+      "address": "0xb18fA0cb5DE8cecB8899AAE6e38b1B7ed77885dA",
+      "startBlock": 21791079
     }
   },
   "gnosis": {
@@ -33,6 +37,10 @@
     "StablePoolFactory": {
       "address": "0x22625eEDd92c81a219A83e1dc48f88d54786B017",
       "startBlock": 37371860
+    },
+    "StableSurgeHook": {
+      "address": "0xe4f1878eC9710846E2B529C1b5037F8bA94583b1",
+      "startBlock": 38432088
     }
   },
   "sepolia": {
@@ -61,8 +69,8 @@
       "startBlock": 7563132
     },
     "StableSurgeHook": {
-      "address": "0xC0cbcdD6b823A4f22aA6BbDDe44C17e754266AEF",
-      "startBlock": 7549387
+      "address": "0x30CE53fA38a1399F0CA158b5c38362c80E423bA9",
+      "startBlock": 7655004
     }
   },
   "arbitrum-one": {
@@ -81,6 +89,10 @@
     "StablePoolFactory": {
       "address": "0xEB1eeaBF0126d813589C3D2CfeFFE410D9aE3863",
       "startBlock": 297829373
+    },
+    "StableSurgeHook": {
+      "address": "0x0Fa0f9990D7969a7aE6f9961d663E4A201Ed6417",
+      "startBlock": 303403113
     }
   },
   "base": {
@@ -99,6 +111,10 @@
     "StablePoolFactory": {
       "address": "0xb9F8AB3ED3F3aCBa64Bc6cd2DcA74B7F38fD7B88",
       "startBlock": 25347318
+    },
+    "StableSurgeHook": {
+      "address": "0xb2007B8B7E0260042517f635CFd8E6dD2Dd7f007",
+      "startBlock": 26049433
     }
   },
   "sonic": {

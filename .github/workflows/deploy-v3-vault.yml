@@ -54,7 +54,7 @@ jobs:
     uses: ./.github/workflows/deploy-subgraph.yml
     with:
       working-directory: subgraphs/v3-vault
-      subgraph-name: balancer-v3-vault-sonic
+      subgraph-name: balancer-v3-sonic
       manifest-file: subgraph.sonic.yaml
     secrets:
-      GRAPH_DEPLOY_KEY: ${{ secrets.BEETS_DEPLOY_KEY }}
+      GRAPH_DEPLOY_KEY: ${{ secrets.GRAPH_DEPLOY_KEY }}

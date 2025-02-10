@@ -48,3 +48,26 @@ dataSources:
         - event: PoolCreated(indexed address)
           handler: handleStablePoolCreated
       file: ./src/mappings/stable.ts
+  - kind: ethereum
+    name: StableSurgeHook
+    network: gnosis
+    source:
+      abi: StableSurgeHook
+      address: "0xe4f1878eC9710846E2B529C1b5037F8bA94583b1"
+      startBlock: 38432088
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Factory
+        - Pool
+      abis:
+        - name: StablePool
+          file: ./abis/StablePool.json
+        - name: StableSurgeHook
+          file: ./abis/StableSurgeHook.json
+      eventHandlers:
+        - event: StableSurgeHookRegistered(indexed address,indexed address)
+          handler: handleStableSurgeHookRegistered
+      file: ./src/mappings/surge.ts

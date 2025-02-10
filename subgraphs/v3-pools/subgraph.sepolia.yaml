@@ -99,8 +99,8 @@ dataSources:
     network: sepolia
     source:
       abi: StableSurgeHook
-      address: "0xC0cbcdD6b823A4f22aA6BbDDe44C17e754266AEF"
-      startBlock: 7549387
+      address: "0x30CE53fA38a1399F0CA158b5c38362c80E423bA9"
+      startBlock: 7655004
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

@@ -153,6 +153,10 @@ type PoolToken @entity {
   volume: BigDecimal!
   "Total swap fees collected for this token"
   totalSwapFee: BigDecimal!
+  "Total static swap fees collected for this token"
+  totalStaticSwapFee: BigDecimal!
+  "Total dynamic swap fees collected for this token"
+  totalDynamicSwapFee: BigDecimal!
   "Buffer associated with this token, if any"
   buffer: Buffer
   "Nested Pool associated with this token, if any"
@@ -248,6 +252,8 @@ type Swap @entity(immutable: true) {
   swapFeeAmount: BigDecimal!
   "Swap fee percentage"
   swapFeePercentage: BigDecimal!
+  "Indicates whether the swap fee is dynamic"
+  hasDynamicSwapFee: Boolean!
   "User who performed the swap"
   user: User!
   "Block number when the swap occurred"
@@ -316,6 +322,10 @@ type PoolSnapshot @entity {
   balances: [BigDecimal!]!
   "Total swap fees collected for each token at the time of the snapshot"
   totalSwapFees: [BigDecimal!]!
+  "Total static swap fees collected for each token at the time of the snapshot"
+  totalStaticSwapFees: [BigDecimal!]!
+  "Total dynamic swap fees collected for each token at the time of the snapshot"
+  totalDynamicSwapFees: [BigDecimal!]!
   "Total swap volumes for each token at the time of the snapshot"
   totalSwapVolumes: [BigDecimal!]!
   "Total protocol swap fees collected for each token at the time of the snapshot"

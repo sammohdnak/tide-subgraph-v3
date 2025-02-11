@@ -283,6 +283,20 @@ export function handleLiquidityRemoved(event: LiquidityRemoved): void {
 export function handleSwap(event: SwapEvent): void {
   createUser(event.transaction.from);
 
+  let poolAddress = event.params.pool;
+
+  let pool = Pool.load(poolAddress);
+  if (pool == null) {
+    log.warning("Pool not found in handleSwap: {} {}", [
+      poolAddress.toHex(),
+      event.transaction.hash.toHex(),
+    ]);
+    return;
+  }
+
+  pool.swapsCount = pool.swapsCount.plus(BigInt.fromI32(1));
+  pool.save();
+
   let swap = new Swap(event.transaction.hash.concatI32(event.logIndex.toI32()));
 
   let tokenIn = getToken(event.params.tokenIn);
@@ -306,6 +320,7 @@ export function handleSwap(event: SwapEvent): void {
   swap.swapFeeAmount = swapFeeAmount;
   swap.swapFeeToken = event.params.tokenIn;
   swap.swapFeePercentage = scaleDown(event.params.swapFeePercentage, 18);
+  swap.hasDynamicSwapFee = pool.swapFee != swap.swapFeePercentage;
   swap.user = event.transaction.from;
 
   swap.logIndex = event.logIndex;
@@ -313,20 +328,6 @@ export function handleSwap(event: SwapEvent): void {
   swap.blockTimestamp = event.block.timestamp;
   swap.transactionHash = event.transaction.hash;
   swap.save();
-
-  let poolAddress = event.params.pool;
-
-  let pool = Pool.load(poolAddress);
-  if (pool == null) {
-    log.warning("Pool not found in handleSwap: {} {}", [
-      poolAddress.toHex(),
-      event.transaction.hash.toHex(),
-    ]);
-    return;
-  }
-
-  pool.swapsCount = pool.swapsCount.plus(BigInt.fromI32(1));
-  pool.save();
 
   let tokenInAddress = event.params.tokenIn;
   let tokenOutAddress = event.params.tokenOut;
@@ -355,6 +356,15 @@ export function handleSwap(event: SwapEvent): void {
   poolTokenIn.totalProtocolSwapFee = poolTokenIn.totalProtocolSwapFee.plus(
     aggregateSwapFeeAmount
   );
+
+  if (swap.hasDynamicSwapFee) {
+    poolTokenIn.totalDynamicSwapFee =
+      poolTokenIn.totalDynamicSwapFee.plus(swapFeeAmount);
+  } else {
+    poolTokenIn.totalStaticSwapFee =
+      poolTokenIn.totalStaticSwapFee.plus(swapFeeAmount);
+  }
+
   poolTokenIn.save();
 
   let newOutAmount = poolTokenOut.balance.minus(tokenAmountOut);

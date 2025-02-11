@@ -82,6 +82,8 @@ export function createPoolSnapshot(pool: Pool, timestamp: i32): void {
     totalSwapVolumes[i] = poolTokens[i].volume;
     balances[i] = poolTokens[i].balance;
     totalSwapFees[i] = poolTokens[i].totalSwapFee;
+    totalStaticSwapFees[i] = poolTokens[i].totalStaticSwapFee;
+    totalDynamicSwapFees[i] = poolTokens[i].totalDynamicSwapFee;
     totalProtocolSwapFees[i] = poolTokens[i].totalProtocolSwapFee;
     totalProtocolYieldFees[i] = poolTokens[i].totalProtocolYieldFee;
   }

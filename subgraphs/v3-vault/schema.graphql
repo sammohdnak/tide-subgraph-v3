@@ -153,6 +153,10 @@ type PoolToken @entity {
   volume: BigDecimal!
   "Total swap fees collected for this token"
   totalSwapFee: BigDecimal!
+  "Total base swap fees collected using static swap fee"
+  totalSwapFeeBase: BigDecimal!
+  "Total difference in swap fees collected due to dynamic fees"
+  totalSwapFeeDelta: BigDecimal!
   "Total static swap fees collected for this token"
   totalStaticSwapFee: BigDecimal!
   "Total dynamic swap fees collected for this token"
@@ -250,6 +254,10 @@ type Swap @entity(immutable: true) {
   swapFeeToken: Bytes!
   "Amount of swap fees"
   swapFeeAmount: BigDecimal!
+  "Base fee amount calculated using static swap fee"
+  swapFeeBaseAmount: BigDecimal!
+  "Difference between actual fee amount and base fee amount due to dynamic fees"
+  swapFeeDeltaAmount: BigDecimal!
   "Swap fee percentage"
   swapFeePercentage: BigDecimal!
   "Indicates whether the swap fee is dynamic"

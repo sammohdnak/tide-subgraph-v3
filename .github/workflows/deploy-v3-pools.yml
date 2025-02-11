@@ -57,4 +57,4 @@ jobs:
       subgraph-name: balancer-v3-pools-sonic
       manifest-file: subgraph.sonic.yaml
     secrets:
-      GRAPH_DEPLOY_KEY: ${{ secrets.BEETS_DEPLOY_KEY }}
+      GRAPH_DEPLOY_KEY: ${{ secrets.GRAPH_DEPLOY_KEY }}

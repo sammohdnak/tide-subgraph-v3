@@ -135,6 +135,8 @@ export function createPoolToken(
   poolToken.balance = ZERO_BD;
   poolToken.volume = ZERO_BD;
   poolToken.totalSwapFee = ZERO_BD;
+  poolToken.totalSwapFeeBase = ZERO_BD;
+  poolToken.totalSwapFeeDelta = ZERO_BD;
   poolToken.totalStaticSwapFee = ZERO_BD;
   poolToken.totalDynamicSwapFee = ZERO_BD;
   poolToken.totalProtocolSwapFee = ZERO_BD;

@@ -310,11 +310,13 @@ export function handleSwap(event: SwapEvent): void {
     swapFeeToken.decimals
   );
 
+  let swapFeePercentage = scaleDown(event.params.swapFeePercentage, 18);
+
   let hasDynamicSwapFee = pool.swapFee != swap.swapFeePercentage;
   let swapFeeBaseAmount = swapFeeAmount;
   let swapFeeDeltaAmount = ZERO_BD;
   if (hasDynamicSwapFee) {
-    let swapFeeDelta = swap.swapFeePercentage.minus(pool.swapFee);
+    let swapFeeDelta = swapFeePercentage.minus(pool.swapFee);
     swapFeeBaseAmount = tokenAmountIn.times(pool.swapFee);
     swapFeeDeltaAmount = tokenAmountIn.times(swapFeeDelta);
   }
@@ -330,7 +332,7 @@ export function handleSwap(event: SwapEvent): void {
   swap.swapFeeBaseAmount = swapFeeBaseAmount;
   swap.swapFeeDeltaAmount = swapFeeDeltaAmount;
   swap.swapFeeToken = event.params.tokenIn;
-  swap.swapFeePercentage = scaleDown(event.params.swapFeePercentage, 18);
+  swap.swapFeePercentage = swapFeePercentage;
   swap.hasDynamicSwapFee = hasDynamicSwapFee;
   swap.user = event.transaction.from;
   swap.logIndex = event.logIndex;

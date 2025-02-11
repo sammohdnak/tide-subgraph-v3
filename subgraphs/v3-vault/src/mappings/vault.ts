@@ -312,7 +312,7 @@ export function handleSwap(event: SwapEvent): void {
 
   let swapFeePercentage = scaleDown(event.params.swapFeePercentage, 18);
 
-  let hasDynamicSwapFee = pool.swapFee != swap.swapFeePercentage;
+  let hasDynamicSwapFee = pool.swapFee != swapFeePercentage;
   let swapFeeBaseAmount = swapFeeAmount;
   let swapFeeDeltaAmount = ZERO_BD;
   if (hasDynamicSwapFee) {
